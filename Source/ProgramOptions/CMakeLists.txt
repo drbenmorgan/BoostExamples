@@ -5,6 +5,8 @@
 find_package(Boost 1.48.0 REQUIRED program_options)
 
 # - Examples
-add_executable(basic_positional basic_positional.cpp)
-target_link_libraries(basic_positional ${Boost_LIBRARIES})
+foreach(_p basic_positional multiple_help)
+  add_executable(${_p} ${_p}.cpp)
+  target_link_libraries(${_p} ${Boost_LIBRARIES})
+endforeach()
 
