@@ -37,6 +37,7 @@ find_package(Boost 1.48.0 REQUIRED)
 # Global settings and recurse into example tree
 #
 include_directories(${Boost_INCLUDE_DIRS})
+enable_testing()
 
 add_subdirectory(Source)
 
