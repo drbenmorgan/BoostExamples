@@ -70,6 +70,8 @@ namespace ascii = boost::spirit::ascii;
 #include <boost/spirit/include/phoenix_stl.hpp>
 #include <boost/spirit/include/phoenix_object.hpp>
 namespace phx = boost::phoenix;
+
+#include "boost/lexical_cast.hpp"
 // This Project
 
 //----------------------------------------------------------------------
@@ -105,6 +107,34 @@ std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
   return os;
 }
 
+//----------------------------------------------------------------------
+/// Convert hex string, e.g. 0xF to supplied type
+template <typename T>
+struct HexTo {
+  T value;
+  operator T() const {
+    return value;
+  }
+  
+  friend std::istream& operator>>(std::istream& in, HexTo& out) {
+    in >> std::hex >> out.value;
+    return in;
+  }
+};
+
+struct HexConverter {
+  template <typename T1>
+  struct result { typedef unsigned long type;};
+
+  unsigned long operator()(const std::string& s) const
+  {
+    return boost::lexical_cast<HexTo<unsigned long> >(s);
+  }
+};
+
+phx::function<HexConverter> PHXConvertor;
+
+
 namespace warwick {
 // Try to make grammar of scalars/sequence easier - implies no
 // backward compatibility
@@ -138,22 +168,32 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
     typedvalue.add("bool", &boolean);
 
     // bitsets can be synthesized as a sequence of 0s and 1s
-    // or as hexadecimal (that's for later)
+    // or as hexadecimal
     // for now it needs to become a string seem to need to do
     // this with dedicated rules so that attributes propagate
     // correctly
     // http://boost.2283326.n4.nabble.com/Spirit-Qi-variant-with-std-string-td2715777.html
     // Need a semantic action to convert that to a bitset so it's
     // attribute is finally compatible with the bitset rule
-    //
-    // TODO : parse "1111" and "0xf"
-    bitset_as_string %= qi::lexeme[+qi::char_("01")];
-    bitset = bitset_as_string[qi::_val = phx::construct<boost::dynamic_bitset<> >(qi::_1)];
+    // ISSUE: Can only construct, not assign bitset, hence we split
+    // into two rules which parse the raw strings, then
+    // an alternate rule with semantic actions and *no* attribute
+    // compatibility
+    binary_bitset %= qi::lexeme[qi::repeat(1,64)[qi::char_("01")]];
+    
+    hex_bitset %= qi::lexeme[qi::string("0x") > qi::repeat(1,16)[ascii::xdigit]];
+    
+    bitset = hex_bitset[
+                qi::_val = phx::construct<boost::dynamic_bitset<> >(PHXConvertor(qi::_1))
+              ] 
+              | 
+              binary_bitset[
+                qi::_val = phx::construct<boost::dynamic_bitset<> > (qi::_1)
+              ];
     typedvalue.add("bitset", &bitset);
 
-    // Assignment uses rule appropriate to type keyword
-    typedassignment = qi::omit[typedvalue[qi::_a = qi::_1]]
-        > '=' > qi::lazy(*qi::_a);
+    // Assignment uses rule appropriate to parsed type keyword
+    typedassignment = qi::omit[typedvalue[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
 
     // Now the actual grammar of the property
     property %= identifier > ':' > typedassignment;
@@ -175,8 +215,8 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
   value_rule_t string;
   value_rule_t boolean;
 
-  qi::rule<Iterator, std::string()> bitset_as_string;
-  qi::rule<Iterator, std::string()> bitset_as_hex;
+  qi::rule<Iterator, std::string()> binary_bitset;
+  qi::rule<Iterator, std::string()> hex_bitset;
   value_rule_t bitset;
 
   qi::symbols<char, value_rule_t*> typedvalue;
