@@ -91,7 +91,28 @@ struct Property {
                          std::vector<std::string> > value_type;
   key_type Key;
   value_type Value;
+
+  /// Visitor that outputs the property value to a given ostream
+  struct ostream_visitor : public boost::static_visitor<void> {
+  public:
+    ostream_visitor(std::ostream& os) : os_(os) {}
+    
+    std::ostream& os_;
+  
+    template <typename T>
+    void operator()(const T& arg) const {
+      os_ << arg;
+    }
+    
+    template<typename U>
+    void operator()(const std::vector<U>& arg) const {
+      std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
+    }
+  };
+
 };
+
+
 } // namespace warwick
 
 BOOST_FUSION_ADAPT_STRUCT(
@@ -102,8 +123,9 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
   // need a vistor for sequence types
-  os << "[" << "key: " << p.Key << ","
-            << "value[" << p.Value.which() << "]: " << "p.Value" << "]";
+  os << "[" << "key: " << p.Key << "," << "value[" << p.Value.which() << "]: ";
+  boost::apply_visitor(warwick::Property::ostream_visitor(os),p.Value);
+  os << "]";
   return os;
 }
 
@@ -122,17 +144,24 @@ struct HexTo {
   }
 };
 
-struct HexConverter {
+/// Convert a string representing a bitset in hexadecimal form to
+/// a boost dynamic_bitset. It's done in this odd way because
+/// we use a conversion via unsigned long, and we have to
+/// construct the bitset with number of bits *and* the value.
+struct HexConverterImpl {
   template <typename T1>
-  struct result { typedef unsigned long type;};
-
-  unsigned long operator()(const std::string& s) const
+  struct result {typedef boost::dynamic_bitset<> type;};
+  
+  boost::dynamic_bitset<> operator()(const std::string& s) const
   {
-    return boost::lexical_cast<HexTo<unsigned long> >(s);
+    size_t nxdigits(s.size() - 2);
+    unsigned long value(boost::lexical_cast<HexTo<unsigned long> >(s));
+    return boost::dynamic_bitset<>(nxdigits*4,value);
   }
 };
 
-phx::function<HexConverter> PHXConvertor;
+/// Create a phoenix wrapper of the hex converter
+phx::function<HexConverterImpl> PHXHexConverter;
 
 
 namespace warwick {
@@ -168,23 +197,18 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
     typedvalue.add("bool", &boolean);
 
     // bitsets can be synthesized as a sequence of 0s and 1s
-    // or as hexadecimal
-    // for now it needs to become a string seem to need to do
-    // this with dedicated rules so that attributes propagate
-    // correctly
+    // or as hexadecimal. We parse as strings and then use
+    // phoenix conversion specialized for hex/bit notation.
+    // This split is used so that attributes have correct
+    // compatibility:
     // http://boost.2283326.n4.nabble.com/Spirit-Qi-variant-with-std-string-td2715777.html
-    // Need a semantic action to convert that to a bitset so it's
-    // attribute is finally compatible with the bitset rule
-    // ISSUE: Can only construct, not assign bitset, hence we split
-    // into two rules which parse the raw strings, then
-    // an alternate rule with semantic actions and *no* attribute
-    // compatibility
+    // NB: I'm not a spirit expert, so likely this can be done better!
     binary_bitset %= qi::lexeme[qi::repeat(1,64)[qi::char_("01")]];
     
     hex_bitset %= qi::lexeme[qi::string("0x") > qi::repeat(1,16)[ascii::xdigit]];
     
     bitset = hex_bitset[
-                qi::_val = phx::construct<boost::dynamic_bitset<> >(PHXConvertor(qi::_1))
+                qi::_val = PHXHexConverter(qi::_1)
               ] 
               | 
               binary_bitset[
