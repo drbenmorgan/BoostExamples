@@ -43,6 +43,27 @@
 // because thats what it really is. One could also do the same
 // for "real as X" by just having "X".
 //
+// What about nested properties? We can build up a hierarchy
+// just as with JSON:
+//
+// foo : pset = {
+//   bar : int = 1,
+//   baz : real = 3.14
+//   bob : pset = {
+//     rob : bitset = 0xffffff
+//     }
+//   }
+//
+// That's a list of properties though!
+// A "propertyset" is a set of properties, and a property may contain
+// a propertyset!
+//
+// Will need to think about directives as well, main use case
+// is the property description, e.g.
+//
+// @description "description of foo"
+// foo : int = 1
+//
 // Copyright (c) 2014 by Ben Morgan <bmorgan.warwick@gmail.com>
 // Copyright (c) 2014 by The University of Warwick
 //
@@ -77,6 +98,11 @@ namespace phx = boost::phoenix;
 //----------------------------------------------------------------------
 // Basic types
 //
+namespace warwick {
+  struct Property;
+}
+
+std::ostream& operator<<(std::ostream& os, const warwick::Property& p);
 
 namespace warwick {
 struct Property {
@@ -88,7 +114,8 @@ struct Property {
                          boost::dynamic_bitset<>,
                          std::vector<int>,
                          std::vector<double>,
-                         std::vector<std::string> > value_type;
+                         std::vector<std::string>,
+                         boost::recursive_wrapper<std::vector<warwick::Property> > > value_type;
   key_type Key;
   value_type Value;
 
@@ -106,21 +133,29 @@ struct Property {
     
     template<typename U>
     void operator()(const std::vector<U>& arg) const {
-      std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
+      typename std::vector<U>::const_iterator iter = arg.begin();
+      typename std::vector<U>::const_iterator end = arg.end();
+      while (iter != end) {
+        os_ << *iter << ",";
+        ++iter;
+      }
+      // Copy doesn't work...
+      //std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
     }
   };
-
 };
-
 
 } // namespace warwick
 
+// NB: using a struct for convenience, later, can use ADAPT_ADT for getting/setting
+// attributes
 BOOST_FUSION_ADAPT_STRUCT(
     warwick::Property,
     (warwick::Property::key_type, Key)
     (warwick::Property::value_type, Value)
     )
 
+// Output streams for convenience
 std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
   // need a vistor for sequence types
   os << "[" << "key: " << p.Key << "," << "value[" << p.Value.which() << "]: ";
@@ -128,6 +163,7 @@ std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
   os << "]";
   return os;
 }
+
 
 //----------------------------------------------------------------------
 /// Convert hex string, e.g. 0xF to supplied type
@@ -216,6 +252,10 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
               ];
     typedvalue.add("bitset", &bitset);
 
+    // A property can contain a property set
+    property_set = ('{' > property % ',' > '}')[qi::_val = qi::_1];
+    typedvalue.add("pset", &property_set);
+    
     // Assignment uses rule appropriate to parsed type keyword
     typedassignment = qi::omit[typedvalue[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
 
@@ -243,6 +283,8 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
   qi::rule<Iterator, std::string()> hex_bitset;
   value_rule_t bitset;
 
+  value_rule_t property_set;
+  
   qi::symbols<char, value_rule_t*> typedvalue;
 
   qi::rule<Iterator,warwick::Property::value_type(), ascii::space_type,
@@ -250,6 +292,9 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
 
   qi::rule<Iterator, warwick::Property(), ascii::space_type> property;
 };
+
+
+
 } // namespace warwick
 
 
