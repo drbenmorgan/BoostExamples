@@ -123,14 +123,14 @@ struct Property {
   struct ostream_visitor : public boost::static_visitor<void> {
   public:
     ostream_visitor(std::ostream& os) : os_(os) {}
-    
+
     std::ostream& os_;
-  
+
     template <typename T>
     void operator()(const T& arg) const {
       os_ << arg;
     }
-    
+
     template<typename U>
     void operator()(const std::vector<U>& arg) const {
       typename std::vector<U>::const_iterator iter = arg.begin();
@@ -174,7 +174,7 @@ struct HexTo {
   operator T() const {
     return value;
   }
-  
+
   friend std::istream& operator>>(std::istream& in, HexTo& out) {
     in >> std::hex >> out.value;
     return in;
@@ -206,13 +206,13 @@ template <typename Iterator>
       bitset = hex_bitset[qi::_val = HexConverter_(qi::_1)]
                |
                binary_bitset[qi::_val = phx::construct<boost::dynamic_bitset<> >(qi::_1)];
-      
+
       binary_bitset %= qi::repeat(1,64)[qi::char_("01")];
-    
+
       hex_bitset %= qi::string("0x") > qi::repeat(1,16)[ascii::xdigit];
-      
+
     }
-    
+
   private:
     /// Convert a string representing a bitset in hexadecimal form to
     /// a boost dynamic_bitset. It's done in this odd way because
@@ -221,7 +221,7 @@ template <typename Iterator>
     struct HexConverterImpl {
       template <typename T1>
       struct result {typedef boost::dynamic_bitset<> type;};
-      
+
       boost::dynamic_bitset<> operator()(const std::string& s) const
       {
         size_t nxdigits(s.size() - 2);
@@ -229,7 +229,7 @@ template <typename Iterator>
         return boost::dynamic_bitset<>(nxdigits*4,value);
       }
     };
-    
+
   private:
     typedef qi::rule<Iterator,boost::dynamic_bitset<>()> bitset_rule_t;
     typedef qi::rule<Iterator,std::string()> bitset_string_t;
@@ -238,7 +238,7 @@ template <typename Iterator>
     bitset_rule_t bitset;
     phx::function<HexConverterImpl> HexConverter_;
   };
-  
+
 // Try to make grammar of scalars/sequence easier - implies no
 // backward compatibility
 //
@@ -279,7 +279,7 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
     // A property can contain a property set
     property_set = ('{' > property % ',' > '}')[qi::_val = qi::_1];
     typedvalue.add("pset", &property_set);
-    
+
     // Assignment uses rule appropriate to parsed type keyword
     typedassignment = qi::omit[typedvalue[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
 
@@ -306,7 +306,7 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
   value_rule_t bitset;
 
   value_rule_t property_set;
-  
+
   qi::symbols<char, value_rule_t*> typedvalue;
 
   qi::rule<Iterator,warwick::Property::value_type(), ascii::space_type,
