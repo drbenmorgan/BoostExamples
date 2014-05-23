@@ -1,68 +1,124 @@
 // datatype-grammar - simple tests of spirit::qi grammar for LPC
-// properties datatype
+// properties/multiproperties datatype
 //
-// A datatype entry in properties is defined by the grammar
+// At the most basic level, "properties" are key-value pairs with type
+// A "property" is defined by the grammar
 //
 //   <identifier> ::= <c-style-identifier>
-//   <datatype> ::= <identifier> ":" <type> "=" <value> <EOL>
+//   <typename> ::= int | real | bool | ...
+//   <datatype> ::= <identifier> ":" <typename> "=" <value>
 //
-// Here's an initial issue - the grammar of <value> depends on that
-// of <type>. For example, we can't do "foo : real = blab"
-// Better to break down individually(??), i.e.
+// From this, a "properties" object is the grammar
 //
-//   <datatype> ::= <identifier> ":" <assignment> <EOL>
-//   <assignment> ::= <int-assignment> | <real-assignment> | ...
-//   <int-assignment> ::= "int" "=" <integer>
+//   <properties> ::= +(<datatype> <EOL>)
 //
-// See also the "Nabialek Trick":
+// A secondary structure is "multiproperties" which allows separate
+// groups of properties to be isolated into "sections"
+//
+// <section> ::= '[' <idinfo> ']'
+// <multiproperties> ::= +(<section> <properties>)
+//
+// Thus "multiproperties" is nothing more than a one level
+// hierarchy of "properties". It therefore makes sense to try
+// and make "properties" hierarchical - that is,
+//
+// <value> ::= <integer> | <double> | ... | <properties>
+//
+
+
+// Issues with the properties grammar
+// ----------------------------------
+// Typesafe parsing
+// ----------------
+// To get "typesafe" parsing, the parser for <value> must depend on
+// the result of the <typename> parser. Could represent this as
+//
+// <intassignment> ::= 'int' '=' <integer>
+// ...
+// <datatype> ::= <identifier> ':' (<intassignment> | <realassignment>)
+//
+// Problem with this is the number of datatypes, especially if it
+// gets extended. Potentially better way to do this is the
+// "Nabialek Trick":
 //
 // http://boost-spirit.com/home/articles/qi-example/nabialek-trick/
 //
-// which appears to address exactly this problem. This does work
-// in the current solution, but care is needed with attributes
+// which is implemented in the parser. Only thing to watch with this
+// is how spirit's attributes work.
 //
-// Another issue: all the basic types have list equivalents, e.g
+// Descriptions
+// ------------
+// Entries can have descriptions:
+//
+//  #@description "foo bars"
+//  foo : int = 1
+//
+// Not implemented yet.
+//
+// Array specification
+// -------------------
+// All types have array equivalents, e.g
 //
 // foo : int = 1
 // bar : int[2] = 10 20
 //
 // C-style array notation is used, with elements separated by whitespace.
+// This is only needed because of the handwritten parser. With a smarter
+// parser, we don't need this, but, then require a better syntax for
+// arrays (because it's a bit tricky to distinguish "1" from "1 2").
+// This implementation replaces the LPC syntax for arrays with a
+// Python/JSON style list notation:
 //
-// Note also that recent versions of the properties grammar allow an
-// additional "dimension" specifier for reals and strings
+// foo : int = 1
+// foo : int = [1,2,3 , 4 ]
+//
+// Hierarchical Structure
+// ----------------------
+// As noted above, no reason not to merge "multiproperties" functionality
+// into "properties" to create a full hierarchical system.
+// All that is needed is a recursive grammar:
+//
+//   <typename> ::= int | real | bool | ... | properties
+//   <value> ::= <integer> | <real> | ... | <properties>
+//   <property> ::= <identifier> ":" <typename> "=" <value>
+//   <properties> ::= +<property>
+//
+// For example, we could use a Python dict/JSON object style notation
+//
+// foo : properties = {
+//   bar : int = 1,
+//   baz : bool = true,
+//   bob : properties {
+//    fu : string = "bar"
+//   },
+//   rob : real = [3.14, 4.13]
+// }
+//
+// It's this structure that the grammar parses below.
+// Some thought is still needed on how a "document" is defined, e.g.
+// pure hierarchy as xml, or '*any' as in JSON.
+//
+// Property Traits
+// ---------------
+// Latest versions of properties provide a very basic form of "traits"
+// for property entries. For example, a real can have a unit, with the
+// syntax
 //
 //  foo : real as <dimension> = 2.0 <unit>
 //
-// Here, the valid parses are more difficult
-// - specifying a dimension is only valid for reals and strings
-// - there must be a unit if dimension is specified for reals
-// - no unit for strings with dimension
+// similarly for strings, which can be paths
 //
-// Need to check: can arrays of reals/strings have dimension
-// Better, probably, to have "string as path" as type "path"
-// because thats what it really is. One could also do the same
-// for "real as X" by just having "X".
+//  foo : string as path = "/path/to"
 //
-// What about nested properties? We can build up a hierarchy
-// just as with JSON:
+// In the latter case, it may be better to just specify a new type
+// "path" with appropriate parsing (albeit there's little difference,
+// and any path operations are the job of the path object, not the parser).
 //
-// foo : pset = {
-//   bar : int = 1,
-//   baz : real = 3.14
-//   bob : pset = {
-//     rob : bitset = 0xffffff
-//     }
-//   }
+// Similar syntax may be added, so this needs to be watched for.
+// In the dimension case, it may be easier simply to have the parser
+// look for units following the number.
 //
-// That's a list of properties though!
-// A "propertyset" is a set of properties, and a property may contain
-// a propertyset!
 //
-// Will need to think about directives as well, main use case
-// is the property description, e.g.
-//
-// @description "description of foo"
-// foo : int = 1
 //
 // Copyright (c) 2014 by Ben Morgan <bmorgan.warwick@gmail.com>
 // Copyright (c) 2014 by The University of Warwick
