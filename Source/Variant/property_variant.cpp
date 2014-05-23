@@ -77,51 +77,78 @@ namespace warwick {
   class Property;
 }
 
-std::ostream& operator<<(std::ostream& os, const warwick::Property& p);
 
 namespace warwick {
-  class Property {
-  public:
-    typedef std::string key_type;
-    typedef boost::variant<int,
-                           double,
-                           bool,
-                            std::string,
-                            boost::dynamic_bitset<>,
-                            std::vector<int>,
-                            std::vector<double>,
-                            std::vector<std::string>,
-                            boost::recursive_wrapper<std::vector<warwick::Property> > > value_type;
-  private:
-    key_type Key;
-    value_type Value;
-    
-    /// Visitor that outputs the property value to a given ostream
-    struct ostream_visitor : public boost::static_visitor<void> {
-    public:
-      ostream_visitor(std::ostream& os) : os_(os) {}
-      
-      std::ostream& os_;
-      
-      template <typename T>
-      void operator()(const T& arg) const {
-        os_ << arg;
-      }
-      
-      template<typename U>
-      void operator()(const std::vector<U>& arg) const {
-        typename std::vector<U>::const_iterator iter = arg.begin();
-        typename std::vector<U>::const_iterator end = arg.end();
-        while (iter != end) {
-          os_ << *iter << ",";
-          ++iter;
-        }
-        // Copy doesn't work...
-        //std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
-      }
-    };
-  };
-  
+/// Property object mapping between a name and a value
+class Property {
+ public:
+  /// id of property
+  typedef std::string key_type;
+
+  /// types of values the property can take
+  typedef boost::variant<int,
+          double,
+          bool,
+          std::string,
+          boost::dynamic_bitset<>,
+          std::vector<int>,
+          std::vector<double>,
+          std::vector<std::string>,
+          boost::recursive_wrapper<std::vector<warwick::Property> > > value_type;
+
+ public:
+  Property();
+  explicit Property(const key_type& name);
+  ~Property();
+
+ private:
+  key_type Key;
+  value_type Value;
+};
+}
+
+
+//----------------------------------------------------------------------
+// Implementation details
+//
+/// Visitor for obtaining current type
+/// Visitor that outputs a scalar or sequence to supplied ostream
+struct ostream_visitor : public boost::static_visitor<void> {
+ public:
+  ostream_visitor(std::ostream& os) : os_(os) {}
+  std::ostream& os_;
+
+  template <typename T>
+  void operator()(const T& arg) const {
+    os_ << arg;
+  }
+
+  template<typename U>
+  void operator()(const std::vector<U>& arg) const {
+    typename std::vector<U>::const_iterator iter = arg.begin();
+    typename std::vector<U>::const_iterator end = arg.end();
+    while (iter != end) {
+      os_ << *iter << ",";
+      ++iter;
+    }
+    // Copy doesn't work...
+    //std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
+  }
+};
+
+//----------------------------------------------------------------------
+// Property implementation
+//
+namespace warwick {
+Property::Property() : Key(), Value() {
+}
+
+Property::Property(const Property::key_type& name)
+  : Key(name), Value() {
+}
+
+Property::~Property() {
+}
 } // namespace warwick
 
 int main() {
