@@ -64,11 +64,14 @@
 #include <iostream>
 #include <iterator>
 #include <algorithm>
+#include <set>
 
 // Third Party
 // - Boost
 #include "boost/variant.hpp"
 #include "boost/dynamic_bitset.hpp"
+#include "boost/utility/enable_if.hpp"
+#include "boost/mpl/contains.hpp"
 
 //----------------------------------------------------------------------
 // Basic types
@@ -100,6 +103,18 @@ class Property {
   Property();
   explicit Property(const key_type& name);
   ~Property();
+  
+  bool operator<(const warwick::Property& rhs) const;
+  bool operator==(const warwick::Property& rhs) const;
+  
+  // assignment from any type in value_type, but no others?
+  template <typename T>
+  typename boost::enable_if<boost::mpl::contains<Property::value_type::types, T>, Property&>::type
+  operator=(const T& rhs);
+
+  /// Return copy of value
+  template <typename T>
+  T getValue() const;
 
  private:
   key_type Key;
@@ -112,6 +127,17 @@ class Property {
 // Implementation details
 //
 /// Visitor for obtaining current type
+/// Variant also provides interface, but only returns sequence number
+template <typename T>
+class is_type_visitor : public boost::static_visitor<bool> {
+public:
+  template <typename U>
+  bool operator()(const U& arg) const {
+    return typeid(T) == typeid(U);
+  }
+};
+
+
 /// Visitor that outputs a scalar or sequence to supplied ostream
 struct ostream_visitor : public boost::static_visitor<void> {
  public:
@@ -131,7 +157,7 @@ struct ostream_visitor : public boost::static_visitor<void> {
       os_ << *iter << ",";
       ++iter;
     }
-    // Copy doesn't work...
+    // Copy doesn't work...?
     //std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
   }
 };
@@ -149,10 +175,52 @@ Property::Property(const Property::key_type& name)
 
 Property::~Property() {
 }
+
+bool Property::operator<(const warwick::Property& rhs) const {
+  return Key < rhs.Key;
+}
+  
+bool Property::operator==(const warwick::Property& rhs) const {
+  return Key == rhs.Key;
+}
+
+template <typename T>
+typename boost::enable_if<boost::mpl::contains<Property::value_type::types, T>, Property&>::type
+Property::operator=(const T& rhs) {
+  Value = rhs;
+  return *this;
+}
+
+template <typename T>
+T Property::getValue() const {
+  return boost::get<T>(Value);
+}
 } // namespace warwick
+
+
+bool test_collection() {
+  std::set<warwick::Property> pset;
+  pset.insert(warwick::Property("foo"));
+  pset.insert(warwick::Property("bar"));
+  
+  return true;
+}
 
 int main() {
   std::cout << "[boost-examples]" << std::endl;
-  std::cout << ">>> testing property object" <<std::endl;
+  std::cout << ">>> testing property objects" <<std::endl;
+  
+  warwick::Property p("foo");
+  p = 1.0;
+  
+  p = warwick::Property("bar");
+
+  try {
+    bool b = p.getValue<bool>();
+  } catch (const boost::bad_get& e) {
+    std::cerr << "bad get caught" << std::endl;
+  }
+  
+  test_collection();
   return 0;
 }
