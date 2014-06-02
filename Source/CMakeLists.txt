@@ -4,4 +4,5 @@ add_subdirectory(Variant)
 add_subdirectory(Spirit)
 add_subdirectory(Iterator)
 add_subdirectory(ProgramOptions)
+add_subdirectory(PropertyTree)
 
