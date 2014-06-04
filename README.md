@@ -39,17 +39,17 @@ a Makefile in the build directory. You can then build the
 $ make -jN
 ```
 
-where `N` is the number of parallel build jobs. 
+where `N` is the number of parallel build jobs.
 
 At this time, none of the targets are installed (they are examples
 after all!).
 
-The above description assumes a Unix style system, where CMake will 
-generate Unix Makefiles by default. If you prefer working with another 
-build tool, CMake is capable of generating projects for a wide range 
-of IDEs and command line tools. Please see the [CMake Documentation on 
+The above description assumes a Unix style system, where CMake will
+generate Unix Makefiles by default. If you prefer working with another
+build tool, CMake is capable of generating projects for a wide range
+of IDEs and command line tools. Please see the [CMake Documentation on
 Generators](http://cmake.org/cmake/help/v2.8.9/cmake.html#section_Generators) for help on supported build tools and creating projects for
 these tools using CMake. Note that available generators are platform and
 CMake version dependent!
- 
+
 
