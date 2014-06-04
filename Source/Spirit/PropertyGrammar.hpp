@@ -133,8 +133,6 @@
 #include <algorithm>
 // Third Party
 // - Boost
-#include "boost/variant.hpp"
-#include "boost/dynamic_bitset.hpp"
 #include "boost/fusion/include/adapt_struct.hpp"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_char.hpp>
@@ -150,58 +148,7 @@ namespace phx = boost::phoenix;
 
 #include "boost/lexical_cast.hpp"
 // This Project
-
-//----------------------------------------------------------------------
-// Basic types
-//
-namespace warwick {
-  struct Property;
-}
-
-std::ostream& operator<<(std::ostream& os, const warwick::Property& p);
-
-namespace warwick {
-struct Property {
-  typedef std::string key_type;
-  typedef boost::variant<int,
-                         double,
-                         bool,
-                         std::string,
-                         boost::dynamic_bitset<>,
-                         std::vector<int>,
-                         std::vector<double>,
-                         std::vector<std::string>,
-                         boost::recursive_wrapper<std::vector<warwick::Property> > > value_type;
-  key_type Key;
-  value_type Value;
-
-  /// Visitor that outputs the property value to a given ostream
-  struct ostream_visitor : public boost::static_visitor<void> {
-  public:
-    ostream_visitor(std::ostream& os) : os_(os) {}
-
-    std::ostream& os_;
-
-    template <typename T>
-    void operator()(const T& arg) const {
-      os_ << arg;
-    }
-
-    template<typename U>
-    void operator()(const std::vector<U>& arg) const {
-      typename std::vector<U>::const_iterator iter = arg.begin();
-      typename std::vector<U>::const_iterator end = arg.end();
-      while (iter != end) {
-        os_ << *iter << ",";
-        ++iter;
-      }
-      // Copy doesn't work...
-      //std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
-    }
-  };
-};
-
-} // namespace warwick
+#include "Property.hpp"
 
 // NB: using a struct for convenience, later, can use ADAPT_ADT for getting/setting
 // attributes
@@ -210,15 +157,6 @@ BOOST_FUSION_ADAPT_STRUCT(
     (warwick::Property::key_type, Key)
     (warwick::Property::value_type, Value)
     )
-
-// Output streams for convenience
-std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
-  // need a vistor for sequence types
-  os << "[" << "key: " << p.Key << "," << "value[" << p.Value.which() << "]: ";
-  boost::apply_visitor(warwick::Property::ostream_visitor(os),p.Value);
-  os << "]";
-  return os;
-}
 
 
 //----------------------------------------------------------------------
