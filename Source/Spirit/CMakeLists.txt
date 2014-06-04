@@ -13,3 +13,7 @@ add_library(PropertyParser SHARED PropertyParser.cpp)
 add_executable(datatype-grammar datatype-grammar.cpp)
 target_link_libraries(datatype-grammar PropertyParser)
 
+add_executable(property-filereader property-filereader.cpp)
+target_link_libraries(property-filereader PropertyParser)
+
+

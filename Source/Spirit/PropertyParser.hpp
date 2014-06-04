@@ -22,5 +22,8 @@
 /// Parse input string using properties grammar, returning true on success
 bool parse_string(const std::string& input, warwick::Property& output);
 
+/// Parse input istream using properties grammar, returning true on success
+bool parse_istream(std::istream& input, warwick::Property& output);
+
 #endif // PROPERTYPARSER_HH
 
