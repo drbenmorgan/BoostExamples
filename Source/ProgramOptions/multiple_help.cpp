@@ -12,6 +12,7 @@
 
 // Third Party
 // - Boost
+#include <boost/version.hpp>
 #include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
 
@@ -37,7 +38,10 @@ int main(int argc, char** argv) {
       ("help-foos", "Print information on available foos")
       ("help-foo",
        po::value<std::string>()
+// Only on Boost 1.50 and higher
+#if BOOST_VERSION>=105000
        ->value_name("[foo]")
+#endif
        ->notifier(&handle_help_foo),
        "Print help on a specific foo")
       ("required",
