@@ -18,38 +18,29 @@
 // This Project
 #include "PropertyGrammar.hpp"
 
-
-bool parse_string(const std::string& input) {
+bool parse_string(const std::string& input, warwick::Property& output) {
   std::string::const_iterator first(input.begin());
   std::string::const_iterator last(input.end());
 
   warwick::PropertyParser<std::string::const_iterator> g;
-  warwick::Property p;
   // apply eoi after property parser because here there should be
   // no trailing input
   bool result = qi::phrase_parse(first,
       last,
       g >> qi::eoi,
       ascii::space,
-      p
+      output
       );
 
-  if (!result) {
-    std::cout << "Failed to parse \"" << input << "\"" << std::endl;
-    return false;
-  }
+  // Handle incomplete parse
   if (first != last) {
-    std::cout << "No complete parse of \"" << input << "\"" << std::endl;
-    std::cout << "Dangling input:" << std::endl;
-    std::copy(first,last,std::ostream_iterator<const char>(std::cout));
-    std::cout << std::endl;
-
+    std::cerr << "No complete parse of \"" << input << "\"" << std::endl;
+    std::cerr << "Dangling input:" << std::endl;
+    std::copy(first,last,std::ostream_iterator<const char>(std::cerr));
+    std::cerr << std::endl;
     return false;
   }
 
-  std::cout << "Successful parse of \"" << input << "\"" << std::endl;
-  std::cout << "Property = " << p << std::endl;
-
-  return true;
+  return result;
 }
 

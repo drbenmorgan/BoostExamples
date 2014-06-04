@@ -17,9 +17,10 @@
 // - A
 
 // This Project
+#include "Property.hpp"
 
 /// Parse input string using properties grammar, returning true on success
-bool parse_string(const std::string& input);
+bool parse_string(const std::string& input, warwick::Property& output);
 
 #endif // PROPERTYPARSER_HH
 

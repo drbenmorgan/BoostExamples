@@ -29,7 +29,18 @@ int main(int argc, const char *argv[])
 
   while (std::getline(std::cin, input)) {
     if (input.empty() || input[0] == 'q' || input[0] == 'Q') break;
-    parse_string(input);
+
+    warwick::Property config;
+
+    if (parse_string(input, config)) {
+      std::cout << "Successful parse of \"" << input << "\"" << std::endl;
+      std::cout << "Property = " << config << std::endl;
+    } else {
+      // NB, even failure may leave us with a partially config object...
+      // for example, key may have been set but nothing else.
+      std::cerr << "Failed to parse \"" << input << "\"" << std::endl;
+    }
+
     std::cout << ">>> ";
   }
 
