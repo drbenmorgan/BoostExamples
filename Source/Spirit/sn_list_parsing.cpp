@@ -18,14 +18,15 @@ typedef std::vector<Statement> Document;
 // Statement grammar
 // Insist on blank_type because statements should only be agnostic to
 // spaces and tabs
+// Use qi::skip for the list because we have brackets to delimit this
 template <typename Iterator>
 struct StatementGrammar : qi::grammar<Iterator,Statement(),qi::blank_type> {
   StatementGrammar() : StatementGrammar::base_type(statement) {
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
     statement = identifier > '='
-                > '['
-                > qi::skip(qi::space)[qi::int_ % ","]
-                > ']';
+                > qi::skip(qi::space)[
+                    '['> qi::int_ % "," > ']'
+                  ];
     BOOST_SPIRIT_DEBUG_NODE(identifier);
     BOOST_SPIRIT_DEBUG_NODE(statement);
   }
