@@ -1,0 +1,16 @@
+
+  foo = 1 
+bar = 2
+
+baz = {
+  a = 1,
+  b = {
+    alpha = 314,
+    beta = 42
+    }
+}
+
+bob =1
+
+
+

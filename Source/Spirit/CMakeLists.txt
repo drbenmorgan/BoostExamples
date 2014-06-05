@@ -10,6 +10,9 @@ add_executable(sehe-multigrammar sehe-multigrammar.cpp)
 add_executable(sn_parsing sn_parsing.cpp)
 add_executable(sn_list_parsing sn_list_parsing.cpp)
 
+# Simple recursive data structure
+add_executable(rds_parsing rds_parsing.cpp)
+
 # Property parser lib
 add_library(PropertyParser SHARED PropertyParser.cpp)
 
