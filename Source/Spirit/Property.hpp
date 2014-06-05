@@ -11,6 +11,7 @@
 #define PROPERTY_HH
 // Standard Library
 #include <string>
+#include <vector>
 
 // Third Party
 // - Boost
@@ -60,6 +61,8 @@ struct Property {
   };
 };
 
+typedef std::vector<warwick::Property> PropertyDocument;
+
 } // namespace warwick
 
 // Output streams for convenience
@@ -68,6 +71,16 @@ std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
   os << "[" << "key: " << p.Key << "," << "value[" << p.Value.which() << "]: ";
   boost::apply_visitor(warwick::Property::ostream_visitor(os),p.Value);
   os << "]";
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const warwick::PropertyDocument& d) {
+  warwick::PropertyDocument::const_iterator iter = d.begin();
+  warwick::PropertyDocument::const_iterator end = d.end();
+  while (iter != end) {
+    os << *iter << "\n";
+    ++iter;
+  }
   return os;
 }
 

@@ -28,8 +28,8 @@ bool parse_string(const std::string& input, warwick::Property& output) {
   // no trailing input
   bool result = qi::phrase_parse(first,
       last,
-      g >> qi::eoi,
-      ascii::space,
+      g > qi::eoi,
+      qi::blank,
       output
       );
 
@@ -55,8 +55,8 @@ bool parse_istream(std::istream& input, warwick::Property& output) {
   // no trailing input
   bool result = qi::phrase_parse(first,
       last,
-      g >> qi::eoi,
-      ascii::space,
+      g > qi::eoi,
+      qi::blank,
       output
       );
 
@@ -65,6 +65,32 @@ bool parse_istream(std::istream& input, warwick::Property& output) {
     std::cerr << "No complete parse of \"" << input << "\"" << std::endl;
     std::cerr << "Dangling input:" << std::endl;
     std::copy(first,last,std::ostream_iterator<const char>(std::cerr));
+    std::cerr << std::endl;
+    return false;
+  }
+
+  return result;
+}
+
+bool parse_document(std::istream& input, warwick::PropertyDocument& output) {
+  boost::spirit::istream_iterator first(input);
+  boost::spirit::istream_iterator last;
+
+  warwick::PropertyDocumentGrammar<boost::spirit::istream_iterator> g;
+  // apply eoi after property parser because here there should be
+  // no trailing input
+  bool result = qi::phrase_parse(first,
+      last,
+      g,
+      qi::blank,
+      output
+      );
+
+  // Handle incomplete parse
+  if (first != last) {
+    std::cerr << "No complete parse of \"" << input << "\"" << std::endl;
+    std::cerr << "Dangling input:" << std::endl;
+    //std::copy(first,last,std::ostream_iterator<const char>(std::cerr));
     std::cerr << std::endl;
     return false;
   }

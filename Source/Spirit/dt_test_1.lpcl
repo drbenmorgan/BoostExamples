@@ -1,10 +1,14 @@
-alpha   : int = 4
-bravo   : real = 3.14
-charlie : bool = false
-delta   : string = "hello world"
-echo    : bitset = 01010101
-foxtrot : int = [1, 2, 3, 4]
-golf    : real = [1.1, 2.11, 3, 4.56789]
-hotel   : string = ["ritz", "dorchester"]
-india   : pset = {juliet : string = "window"}
-
+omega : pset = {
+  alpha   : int = 4,
+  bravo   : real = 3.14,
+  charlie : bool = false,
+  delta   : string = "hello world",
+  echo    : bitset = 01010101,
+  foxtrot : int = [1, 2, 3, 4],
+  golf    : real = [1.1, 2.11, 3, 4.56789],
+  hotel   : string = ["ritz", "dorchester"],
+  india   : pset = {
+    juliet : string = "window", 
+    kilo : real = 1.1
+    }
+  }

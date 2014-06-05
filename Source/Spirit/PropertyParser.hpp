@@ -19,11 +19,14 @@
 // This Project
 #include "Property.hpp"
 
-/// Parse input string using properties grammar, returning true on success
+/// Parse input string using property grammar, returning true on success
 bool parse_string(const std::string& input, warwick::Property& output);
 
-/// Parse input istream using properties grammar, returning true on success
+/// Parse input istream using property grammar, returning true on success
 bool parse_istream(std::istream& input, warwick::Property& output);
+
+/// Parse input istream using document grammar, returning true on success
+bool parse_document(std::istream& input, warwick::PropertyDocument& output);
 
 #endif // PROPERTYPARSER_HH
 

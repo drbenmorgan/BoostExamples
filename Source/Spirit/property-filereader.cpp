@@ -24,11 +24,11 @@ int main(int argc, const char *argv[])
   std::ifstream input(argv[1]);
   input.unsetf(std::ios::skipws);
 
-  warwick::Property config;
+  warwick::PropertyDocument config;
 
-  if (parse_istream(input, config)) {
+  if (parse_document(input, config)) {
     std::cout << "Successful parse of \"" << argv[1] << "\"" << std::endl;
-    std::cout << "Property = " << config << std::endl;
+    std::cout << "Document = " << config << std::endl;
   } else {
     // NB, even failure may leave us with a partially config object...
     // for example, key may have been set but nothing else.

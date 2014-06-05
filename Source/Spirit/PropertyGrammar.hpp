@@ -133,6 +133,7 @@
 #include <algorithm>
 // Third Party
 // - Boost
+#define BOOST_SPIRIT_DEBUG
 #include "boost/fusion/include/adapt_struct.hpp"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_char.hpp>
@@ -247,18 +248,27 @@ template <typename Iterator>
 // property     <- identifier ':' (integer / real / bool / string)
 //
 template <typename Iterator>
-struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_type> {
+struct PropertyParser : qi::grammar<Iterator, warwick::Property(), qi::blank_type> {
   PropertyParser() : PropertyParser::base_type(property) {
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
     quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
 
-    integer %= qi::int_ | ('[' > qi::int_ % ',' > ']');
+    integer %= qi::int_
+               | qi::skip(qi::space)[
+                   '[' > qi::int_ % "," > ']'
+                  ];
     typedvalue.add("int", &integer);
 
-    real %= qi::double_ | ('[' > qi::double_ % ',' > ']');
+    real %= qi::double_
+            | qi::skip(qi::space)[
+                '[' > qi::double_ % "," > ']'
+              ];
     typedvalue.add("real", &real);
 
-    string %= quotedstring | ('[' > quotedstring % ',' > ']');
+    string %= quotedstring
+              | qi::skip(qi::space)[
+                  '[' > quotedstring % ',' > ']'
+                ];
     typedvalue.add("string", &string);
 
     boolean %= qi::bool_;
@@ -280,6 +290,8 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
     // Now the actual grammar of the property
     property %= identifier > ':' > typedassignment;
 
+    BOOST_SPIRIT_DEBUG_NODE(property);
+    BOOST_SPIRIT_DEBUG_NODE(typedassignment);
     // Because we use expectations, provide simple error handler
     qi::on_error<qi::fail>(property,
                            std::cout << phx::val("Error! Expecting ")
@@ -288,10 +300,10 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
                            );
   }
 
-  typedef qi::rule<Iterator, warwick::Property::value_type(), ascii::space_type> value_rule_t;
+  typedef qi::rule<Iterator, warwick::Property::value_type(), qi::blank_type> value_rule_t;
 
   qi::rule<Iterator, std::string()> identifier;
-  qi::rule<Iterator, std::string(), ascii::space_type> quotedstring;
+  qi::rule<Iterator, std::string()> quotedstring;
   value_rule_t integer;
   value_rule_t real;
   value_rule_t string;
@@ -303,13 +315,31 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), ascii::space_
 
   qi::symbols<char, value_rule_t*> typedvalue;
 
-  qi::rule<Iterator,warwick::Property::value_type(), ascii::space_type,
+  qi::rule<Iterator,warwick::Property::value_type(), qi::blank_type,
       qi::locals<value_rule_t*> > typedassignment;
 
-  qi::rule<Iterator, warwick::Property(), ascii::space_type> property;
+  qi::rule<Iterator, warwick::Property(), qi::blank_type> property;
 };
 
 
+//----------------------------------------------------------------------
+// A properties "document" is zero or more properties.
+// For now we just stuff these into a vector
+//
+template <typename Iterator>
+struct PropertyDocumentGrammar :
+    public qi::grammar<Iterator, warwick::PropertyDocument(), qi::blank_type> {
+  PropertyDocumentGrammar() : PropertyDocumentGrammar::base_type(document) {
+    document %= qi::omit[*qi::space]
+                >> property_rule % +qi::char_("\n")
+                >> qi::omit[*qi::space]
+                > qi::eoi;
+    BOOST_SPIRIT_DEBUG_NODE(document);
+  }
+
+  PropertyParser<Iterator> property_rule;
+  qi::rule<Iterator, warwick::PropertyDocument(), qi::blank_type> document;
+};
 
 } // namespace warwick
 
