@@ -30,12 +30,13 @@
 
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/support_istream_iterator.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 namespace qi = boost::spirit::qi;
 
 struct Property;
 typedef std::vector<Property> PList;
-typedef boost::variant<int, boost::recursive_wrapper<PList> > PValue;
+typedef boost::variant<int, double, std::vector<int>, std::vector<double>, boost::recursive_wrapper<PList> > PValue;
 
 struct Property {
   std::string id;
@@ -55,13 +56,13 @@ struct ostream_visitor : public boost::static_visitor<void> {
   std::ostream& os_;
 
   template <typename T>
-  void operator()(const T& arg) const {os_ << "int(" << arg << ")";}
+  void operator()(const T& arg) const {os_ << "value(" << arg << ")";}
 
   template<typename U>
   void operator()(const std::vector<U>& arg) const {
     typename std::vector<U>::const_iterator iter = arg.begin();
     typename std::vector<U>::const_iterator end = arg.end();
-    os_ << "plist{";
+    os_ << "list{";
     while (iter != end) {
       os_ << *iter << ",";
       ++iter;
@@ -89,26 +90,49 @@ std::ostream& operator<<(std::ostream& os, const PList& d) {
   return os;
 }
 
+
 template <typename Iterator, typename Skipper>
 struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   PropertyParser() : PropertyParser::base_type(property) {
-    property %= identifier > '=' > value;
+    property %= identifier > ':' > assignment;
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
-    value %= qi::int_ | plist;
-    plist %= '{' > property % ',' > '}';
+    assignment %= node | tree;
+
+    // real has to come before int because the parser will otherwise
+    // parse the int part using the intvalue parser!
+    node %= qi::omit[nodetypes[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
+
+    intnode %= qi::int_ | '[' > qi::int_ % ',' > ']';
+    nodetypes.add("int", &intnode);
+
+    realnode %= qi::double_ | '[' > qi::double_ % ',' > ']';
+    nodetypes.add("real", &realnode);
+
+    tree %= '{' > property % ',' > '}';
+
     BOOST_SPIRIT_DEBUG_NODE(property);
+    BOOST_SPIRIT_DEBUG_NODE(node);
+    BOOST_SPIRIT_DEBUG_NODE(tree);
   }
+
+  typedef qi::rule<Iterator, PValue(), Skipper> value_rule_t;
+  typedef qi::rule<Iterator, PList(), Skipper> list_rule_t;
 
   qi::rule<Iterator, Property(), Skipper> property;
   qi::rule<Iterator, std::string(), Skipper> identifier;
-  qi::rule<Iterator, PValue(), Skipper> value;
-  qi::rule<Iterator, PList(), Skipper> plist;
+  value_rule_t assignment;
+  list_rule_t tree;
+
+  qi::rule<Iterator, PValue(), Skipper, qi::locals<value_rule_t*> > node;
+  qi::symbols<char, value_rule_t*> nodetypes;
+  value_rule_t intnode;
+  value_rule_t realnode;
 };
 
 template <typename Iterator, typename Skipper>
 struct PropertyListParser : qi::grammar<Iterator, PList(), Skipper> {
   PropertyListParser() : PropertyListParser::base_type(document) {
-    document %= *property; // % qi::char_('\n');
+    document %= *property;
     BOOST_SPIRIT_DEBUG_NODE(document);
   }
 
@@ -126,11 +150,15 @@ int main(int argc, const char *argv[])
 
   PropertyListParser<boost::spirit::istream_iterator, qi::space_type> g;
   PList p;
-  bool result = qi::phrase_parse(first, last, g, qi::space, p);
+  bool result = qi::phrase_parse(first, last, g > qi::eoi, qi::space, p);
 
   if (result) {
     std::cout << "good parse" << std::endl;
     std::cout << p << std::endl;
+
+    if(first != last) {
+      std::cerr << "... but with trailing input..." << std::endl;
+    }
   } else {
     std::cerr << "bad parse" << std::endl;
   }

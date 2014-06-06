@@ -1,16 +1,16 @@
 
-  foo = 1 
-bar = 2
+  foo :int = 1 
+bar :int= 2
 
-baz = {
-  a = 1,
-  b = {
-    alpha = 314,
-    beta = 42
+baz : {
+  a :int = 1,
+  b : {
+    alpha:int = 314,
+    beta:int = 42
     }
 }
 
-bob =1
+bob:real =1
 
 
 
