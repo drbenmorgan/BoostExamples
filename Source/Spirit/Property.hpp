@@ -19,12 +19,12 @@
 #include "boost/dynamic_bitset.hpp"
 
 // This Project
-namespace warwick {
-struct Property;
-} // namespace warwick
-std::ostream& operator<<(std::ostream& os, const warwick::Property& p); 
+//namespace warwick {
+//struct Property;
+//} // namespace warwick
+//std::ostream& operator<<(std::ostream& os, const warwick::Property& p);
 
-  namespace warwick {
+namespace warwick {
 struct Property {
   typedef std::string key_type;
   typedef boost::variant<int,
@@ -67,7 +67,6 @@ struct Property {
 
 typedef std::vector<warwick::Property> PropertyDocument;
 
-} // namespace warwick
 
 // Output streams for convenience
 std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
@@ -88,5 +87,5 @@ std::ostream& operator<<(std::ostream& os, const warwick::PropertyDocument& d) {
   return os;
 }
 
-
+} // namespace warwick
 #endif // PROPERTY_HH
