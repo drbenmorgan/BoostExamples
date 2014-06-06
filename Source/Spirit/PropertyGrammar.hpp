@@ -137,19 +137,10 @@
 #include "boost/fusion/include/adapt_struct.hpp"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_char.hpp>
-namespace qi = boost::spirit::qi;
-namespace ascii = boost::spirit::ascii;
 
-#include <boost/spirit/include/phoenix_core.hpp>
-#include <boost/spirit/include/phoenix_operator.hpp>
-#include <boost/spirit/include/phoenix_fusion.hpp>
-#include <boost/spirit/include/phoenix_stl.hpp>
-#include <boost/spirit/include/phoenix_object.hpp>
-namespace phx = boost::phoenix;
-
-#include "boost/lexical_cast.hpp"
 // This Project
 #include "Property.hpp"
+#include "BitsetGrammar.hpp"
 
 // NB: using a struct for convenience, later, can use ADAPT_ADT for getting/setting
 // attributes
@@ -161,78 +152,11 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 
 //----------------------------------------------------------------------
-/// Convert hex string, e.g. 0xF to supplied type
-/// It is designed to be used with boost lexical cast
-template <typename T>
-struct HexTo {
-  T value;
-  operator T() const {
-    return value;
-  }
-
-  friend std::istream& operator>>(std::istream& in, HexTo& out) {
-    in >> std::hex >> out.value;
-    return in;
-  }
-};
-
 
 namespace warwick {
-// Bitset parser
-// - Parse bitsets represented by strings in the form of:
-//   i) One or more binary digits, e.g. "0101"
-//   ii) A "hexadecimal" word, e.g. 0xffff
-// Because we want to support a variable number of bits
-// (though not completely unbounded), parser should
-// have an attribute of boost::dynamic_bitset
-// Parser should not skip, because forms should never have
-// whitespace
-template <typename Iterator>
-  class BitsetParser : public qi::grammar<Iterator, boost::dynamic_bitset<>()> {
-  public:
-    BitsetParser() : BitsetParser::base_type(bitset) {
-      // bitsets can be synthesized as a sequence of 0s and 1s
-      // or as hexadecimal. We parse as strings and then use
-      // phoenix conversion specialized for hex/bit notation.
-      // This split is used so that attributes have correct
-      // compatibility:
-      // http://boost.2283326.n4.nabble.com/Spirit-Qi-variant-with-std-string-td2715777.html
-      // NB: I'm not a spirit expert, so likely this can be done better!
-      bitset = hex_bitset[qi::_val = HexConverter_(qi::_1)]
-               |
-               binary_bitset[qi::_val = phx::construct<boost::dynamic_bitset<> >(qi::_1)];
-
-      binary_bitset %= qi::repeat(1,64)[qi::char_("01")];
-
-      hex_bitset %= qi::string("0x") > qi::repeat(1,16)[ascii::xdigit];
-
-    }
-
-  private:
-    /// Convert a string representing a bitset in hexadecimal form to
-    /// a boost dynamic_bitset. It's done in this odd way because
-    /// we use a conversion via unsigned long, and we have to
-    /// construct the bitset with number of bits *and* the value.
-    struct HexConverterImpl {
-      template <typename T1>
-      struct result {typedef boost::dynamic_bitset<> type;};
-
-      boost::dynamic_bitset<> operator()(const std::string& s) const
-      {
-        size_t nxdigits(s.size() - 2);
-        unsigned long value(boost::lexical_cast<HexTo<unsigned long> >(s));
-        return boost::dynamic_bitset<>(nxdigits*4,value);
-      }
-    };
-
-  private:
-    typedef qi::rule<Iterator,boost::dynamic_bitset<>()> bitset_rule_t;
-    typedef qi::rule<Iterator,std::string()> bitset_string_t;
-    bitset_string_t binary_bitset;
-    bitset_string_t hex_bitset;
-    bitset_rule_t bitset;
-    phx::function<HexConverterImpl> HexConverter_;
-  };
+namespace qi = boost::spirit::qi;
+namespace ascii = boost::spirit::ascii;
+namespace phx = boost::phoenix;
 
 // Try to make grammar of scalars/sequence easier - implies no
 // backward compatibility
@@ -308,7 +232,7 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), qi::blank_typ
   value_rule_t real;
   value_rule_t string;
   value_rule_t boolean;
-  BitsetParser<Iterator> bitset_rule;
+  BoostExamples::BitsetParser<Iterator> bitset_rule;
   value_rule_t bitset;
 
   value_rule_t property_set;

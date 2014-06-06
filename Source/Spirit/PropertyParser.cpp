@@ -26,10 +26,10 @@ bool parse_string(const std::string& input, warwick::Property& output) {
   warwick::PropertyParser<std::string::const_iterator> g;
   // apply eoi after property parser because here there should be
   // no trailing input
-  bool result = qi::phrase_parse(first,
+  bool result = warwick::qi::phrase_parse(first,
       last,
-      g > qi::eoi,
-      qi::blank,
+      g > warwick::qi::eoi,
+      warwick::qi::blank,
       output
       );
 
@@ -53,10 +53,10 @@ bool parse_istream(std::istream& input, warwick::Property& output) {
   warwick::PropertyParser<boost::spirit::istream_iterator> g;
   // apply eoi after property parser because here there should be
   // no trailing input
-  bool result = qi::phrase_parse(first,
+  bool result = warwick::qi::phrase_parse(first,
       last,
-      g > qi::eoi,
-      qi::blank,
+      g > warwick::qi::eoi,
+      warwick::qi::blank,
       output
       );
 
@@ -79,10 +79,10 @@ bool parse_document(std::istream& input, warwick::PropertyList& output) {
   warwick::PropertyListGrammar<boost::spirit::istream_iterator> g;
   // apply eoi after property parser because here there should be
   // no trailing input
-  bool result = qi::phrase_parse(first,
+  bool result = warwick::qi::phrase_parse(first,
       last,
       g,
-      qi::blank,
+      warwick::qi::blank,
       output
       );
 
