@@ -18,14 +18,12 @@
 #include "boost/variant.hpp"
 #include "boost/dynamic_bitset.hpp"
 
-// This Project
-//namespace warwick {
-//struct Property;
-//} // namespace warwick
-//std::ostream& operator<<(std::ostream& os, const warwick::Property& p);
-
 namespace warwick {
+struct Property;
+typedef std::vector<Property> PropertyList;
+
 struct Property {
+ public:
   typedef std::string key_type;
   typedef boost::variant<int,
                          double,
@@ -35,7 +33,9 @@ struct Property {
                          std::vector<int>,
                          std::vector<double>,
                          std::vector<std::string>,
-                         boost::recursive_wrapper<std::vector<warwick::Property> > > value_type;
+                         boost::recursive_wrapper<PropertyList> > value_type;
+
+ public:
   key_type Key;
   value_type Value;
 
@@ -59,13 +59,9 @@ struct Property {
         os_ << *iter << ",";
         ++iter;
       }
-      // Copy doesn't work...
-      //std::copy(arg.begin(), arg.end(), std::ostream_iterator<U>(os_,","));
     }
   };
 };
-
-typedef std::vector<warwick::Property> PropertyDocument;
 
 
 // Output streams for convenience
@@ -77,9 +73,9 @@ std::ostream& operator<<(std::ostream& os, const warwick::Property& p) {
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const warwick::PropertyDocument& d) {
-  warwick::PropertyDocument::const_iterator iter = d.begin();
-  warwick::PropertyDocument::const_iterator end = d.end();
+std::ostream& operator<<(std::ostream& os, const warwick::PropertyList& d) {
+  warwick::PropertyList::const_iterator iter = d.begin();
+  warwick::PropertyList::const_iterator end = d.end();
   while (iter != end) {
     os << *iter << "\n";
     ++iter;

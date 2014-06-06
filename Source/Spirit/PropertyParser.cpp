@@ -72,11 +72,11 @@ bool parse_istream(std::istream& input, warwick::Property& output) {
   return result;
 }
 
-bool parse_document(std::istream& input, warwick::PropertyDocument& output) {
+bool parse_document(std::istream& input, warwick::PropertyList& output) {
   boost::spirit::istream_iterator first(input);
   boost::spirit::istream_iterator last;
 
-  warwick::PropertyDocumentGrammar<boost::spirit::istream_iterator> g;
+  warwick::PropertyListGrammar<boost::spirit::istream_iterator> g;
   // apply eoi after property parser because here there should be
   // no trailing input
   bool result = qi::phrase_parse(first,

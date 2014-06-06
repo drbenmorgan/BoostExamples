@@ -327,9 +327,9 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), qi::blank_typ
 // For now we just stuff these into a vector
 //
 template <typename Iterator>
-struct PropertyDocumentGrammar :
-    public qi::grammar<Iterator, warwick::PropertyDocument(), qi::blank_type> {
-  PropertyDocumentGrammar() : PropertyDocumentGrammar::base_type(document) {
+struct PropertyListGrammar :
+    public qi::grammar<Iterator, warwick::PropertyList(), qi::blank_type> {
+  PropertyListGrammar() : PropertyListGrammar::base_type(document) {
     document %= qi::omit[*qi::space]
                 >> property_rule % +qi::char_("\n")
                 >> qi::omit[*qi::space]
@@ -338,7 +338,7 @@ struct PropertyDocumentGrammar :
   }
 
   PropertyParser<Iterator> property_rule;
-  qi::rule<Iterator, warwick::PropertyDocument(), qi::blank_type> document;
+  qi::rule<Iterator, warwick::PropertyList(), qi::blank_type> document;
 };
 
 } // namespace warwick

@@ -24,7 +24,7 @@ int main(int argc, const char *argv[])
   std::ifstream input(argv[1]);
   input.unsetf(std::ios::skipws);
 
-  warwick::PropertyDocument config;
+  warwick::PropertyList config;
 
   if (parse_document(input, config)) {
     std::cout << "Successful parse of \"" << argv[1] << "\"" << std::endl;

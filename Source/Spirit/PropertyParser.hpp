@@ -26,7 +26,7 @@ bool parse_string(const std::string& input, warwick::Property& output);
 bool parse_istream(std::istream& input, warwick::Property& output);
 
 /// Parse input istream using document grammar, returning true on success
-bool parse_document(std::istream& input, warwick::PropertyDocument& output);
+bool parse_document(std::istream& input, warwick::PropertyList& output);
 
 #endif // PROPERTYPARSER_HH
 
