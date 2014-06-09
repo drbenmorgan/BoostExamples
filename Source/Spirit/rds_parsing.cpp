@@ -101,7 +101,7 @@ std::ostream& operator<<(std::ostream& os, const PList& d) {
 template <typename Iterator, typename Skipper>
 struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   PropertyParser() : PropertyParser::base_type(property) {
-    property %= qi::omit[-description] >> identifier > ':' > assignment;
+    property %= qi::omit[-description] >> (identifier > ':' > assignment);
 
     description %= "@description" > quotedstring;
     quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
@@ -112,7 +112,12 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
     // Node types - order in which they are added shouldn't matter...
     node %= qi::omit[nodetypes[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
 
-    intnode %= qi::int_ | '[' > qi::int_ % ',' > ']';
+    // Strict integer parsing is needed as qi::int_ will parse
+    // "1.23" as "1" and leave the ".23" dangling. Though that will
+    // subsequently result in a parse fail, construct an explicit, strict
+    // integer parser so the error can be better localized.
+    strictint_ %= qi::int_ >> !qi::double_;
+    intnode %= strictint_ | '[' > strictint_ % ',' > ']';
     nodetypes.add("int", &intnode);
 
     realnode %= qi::double_ | '[' > qi::double_ % ',' > ']';
@@ -144,6 +149,7 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
 
   qi::rule<Iterator, PValue(), Skipper, qi::locals<value_rule_t*> > node;
   qi::symbols<char, value_rule_t*> nodetypes;
+  qi::rule<Iterator, int()> strictint_;
   value_rule_t intnode;
   value_rule_t realnode;
   value_rule_t boolnode;
