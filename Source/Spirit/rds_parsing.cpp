@@ -98,6 +98,7 @@ std::ostream& operator<<(std::ostream& os, const PList& d) {
 }
 
 
+/// PropertyParser : parse a single property
 template <typename Iterator, typename Skipper>
 struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   PropertyParser() : PropertyParser::base_type(property) {
@@ -141,6 +142,7 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   typedef qi::rule<Iterator, PList(), Skipper> list_rule_t;
 
   qi::rule<Iterator, Property(), Skipper> property;
+  // Identifier should be whole word, so don't skip
   qi::rule<Iterator, std::string()> identifier;
   qi::rule<Iterator, std::string(), Skipper> description;
   qi::rule<Iterator, std::string(), Skipper> quotedstring;
@@ -156,9 +158,10 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   value_rule_t stringnode;
 };
 
+/// PropertyDocumentParser : parse a properties document
 template <typename Iterator, typename Skipper>
-struct PropertyListParser : qi::grammar<Iterator, PList(), Skipper> {
-  PropertyListParser() : PropertyListParser::base_type(document) {
+struct PropertyDocumentParser : qi::grammar<Iterator, PList(), Skipper> {
+  PropertyDocumentParser() : PropertyDocumentParser::base_type(document) {
     document %= *property;
     BOOST_SPIRIT_DEBUG_NODE(document);
   }
@@ -167,17 +170,38 @@ struct PropertyListParser : qi::grammar<Iterator, PList(), Skipper> {
   PropertyParser<Iterator, Skipper> property;
 };
 
+/// PropertySkipper : custom skipper that skips whitespace and
+/// Bash/Python style comments
+template <typename Iterator>
+struct PropertySkipper : public qi::grammar<Iterator> {
+  PropertySkipper() : PropertySkipper::base_type(skip) {
+    skip %= qi::space | comment;
+    comment %= qi::lexeme['#' >> *(qi::char_ - qi::eol) >> qi::eol];
+  }
+
+  qi::rule<Iterator> skip;
+  qi::rule<Iterator> comment;
+};
+
 int main(int argc, const char *argv[])
 {
   std::ifstream input(argv[1]);
   input.unsetf(std::ios::skipws);
 
-  boost::spirit::istream_iterator first(input);
-  boost::spirit::istream_iterator last;
+  typedef boost::spirit::istream_iterator Iterator;
+  typedef PropertySkipper<Iterator> Skipper;
 
-  PropertyListParser<boost::spirit::istream_iterator, qi::space_type> g;
+  Iterator first(input);
+  Iterator last;
+  PropertyDocumentParser<Iterator,Skipper> g;
   PList p;
-  bool result = qi::phrase_parse(first, last, g > qi::eoi, qi::space, p);
+
+  bool result = qi::phrase_parse(
+      first,
+      last,
+      g > qi::eoi,
+      Skipper(),
+      p);
 
   if (result) {
     std::cout << "good parse" << std::endl;
