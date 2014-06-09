@@ -36,7 +36,13 @@ namespace qi = boost::spirit::qi;
 
 struct Property;
 typedef std::vector<Property> PList;
-typedef boost::variant<int, double, std::vector<int>, std::vector<double>, boost::recursive_wrapper<PList> > PValue;
+typedef boost::variant<int,
+                       double,
+                       std::string,
+                       std::vector<int>,
+                       std::vector<double>,
+                       std::vector<std::string>,
+                       boost::recursive_wrapper<PList> > PValue;
 
 struct Property {
   std::string id;
@@ -112,6 +118,9 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
     realnode %= qi::double_ | '[' > qi::double_ % ',' > ']';
     nodetypes.add("real", &realnode);
 
+    stringnode %= quotedstring | '[' > quotedstring % ',' > ']';
+    nodetypes.add("string", &stringnode);
+
     tree %= '{' > property % ',' > '}';
 
     BOOST_SPIRIT_DEBUG_NODE(property);
@@ -133,6 +142,7 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   qi::symbols<char, value_rule_t*> nodetypes;
   value_rule_t intnode;
   value_rule_t realnode;
+  value_rule_t stringnode;
 };
 
 template <typename Iterator, typename Skipper>

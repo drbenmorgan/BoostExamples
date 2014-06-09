@@ -2,6 +2,9 @@
   foo :int = 1 
 bar :int= 2
 
+@description "blob stuff"
+blob : string = "blobby blobby"
+
 baz : {
   a :int = 1,
   b : {
