@@ -94,8 +94,12 @@ std::ostream& operator<<(std::ostream& os, const PList& d) {
 template <typename Iterator, typename Skipper>
 struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   PropertyParser() : PropertyParser::base_type(property) {
-    property %= identifier > ':' > assignment;
+    property %= qi::omit[-description] >> identifier > ':' > assignment;
+    description %= "@description" > quotedstring;
+
+    quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
+
     assignment %= node | tree;
 
     // real has to come before int because the parser will otherwise
@@ -120,6 +124,8 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
 
   qi::rule<Iterator, Property(), Skipper> property;
   qi::rule<Iterator, std::string(), Skipper> identifier;
+  qi::rule<Iterator, std::string(), Skipper> description;
+  qi::rule<Iterator, std::string(), Skipper> quotedstring;
   value_rule_t assignment;
   list_rule_t tree;
 
