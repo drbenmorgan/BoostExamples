@@ -123,7 +123,7 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   typedef qi::rule<Iterator, PList(), Skipper> list_rule_t;
 
   qi::rule<Iterator, Property(), Skipper> property;
-  qi::rule<Iterator, std::string(), Skipper> identifier;
+  qi::rule<Iterator, std::string()> identifier;
   qi::rule<Iterator, std::string(), Skipper> description;
   qi::rule<Iterator, std::string(), Skipper> quotedstring;
   value_rule_t assignment;
