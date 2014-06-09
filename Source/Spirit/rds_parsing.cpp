@@ -45,16 +45,47 @@ typedef boost::variant<int,
                        std::vector<std::string>,
                        boost::recursive_wrapper<PList> > PValue;
 
-struct Property {
+/// We use this awkward split because the parsing of the optional
+/// description string means, I think, that we end up with a
+/// fusion sequence of "tuple<Description,tuple<Id,Value> >"
+/// May therefore wish to rewrite rules to construct object
+/// by hand. It does appear that in this case the grammar is somewhat
+/// awakward to directly adapt. Internally, we'd really like mappings
+/// id -> (description, value)
+/// or
+/// (id, description) -> value
+/// or just
+/// id, description, value
+/// We *could just have a struct of
+/// description, id, value, but then we'd certainly need by hand
+/// construction using at least a phoenix construct function.
+//
+// TODO : Investigate these options, and whether the "description"
+// is needed at all internally (probably is...)
+struct PAtom {
   std::string id;
   PValue value;
 };
 
+struct Property {
+  std::string desc;
+  PAtom value;
+};
+
+
 BOOST_FUSION_ADAPT_STRUCT(
-    Property,
+    PAtom,
     (std::string, id)
     (PValue, value)
     )
+
+BOOST_FUSION_ADAPT_STRUCT(
+    Property,
+    (std::string, desc)
+    (PAtom, value)
+    )
+
+
 
 /// Visitor that outputs the property value to a given ostream
 struct ostream_visitor : public boost::static_visitor<void> {
@@ -81,8 +112,9 @@ struct ostream_visitor : public boost::static_visitor<void> {
 // Output streams for convenience
 std::ostream& operator<<(std::ostream& os, const Property& p) {
   // need a vistor for sequence types
-  os << "[" << p.id << ", ";
-  boost::apply_visitor(ostream_visitor(os),p.value);
+  os << "[" << p.value.id << ", "
+     << "\"" << p.desc << "\", ";
+  boost::apply_visitor(ostream_visitor(os),p.value.value);
   os << "]";
   return os;
 }
@@ -102,7 +134,12 @@ std::ostream& operator<<(std::ostream& os, const PList& d) {
 template <typename Iterator, typename Skipper>
 struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   PropertyParser() : PropertyParser::base_type(property) {
-    property %= qi::omit[-description] >> (identifier > ':' > assignment);
+    // NB: this is using the same form so descriptions can truly
+    // be optional - awkwardness *probably* arises from
+    // combination of sequence and expectation ops so that the
+    // attribute thats exposed is tuple<Desc, tuple<Id, Value> >
+    // hence the split into two fusion adapted structs
+    property %= -description >> (identifier > ':' > assignment);
 
     description %= "@description" > quotedstring;
     quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
@@ -133,9 +170,12 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
     // tree of nodes isn't typed because grammar is distinct...
     tree %= '{' > property % ',' > '}';
 
-    BOOST_SPIRIT_DEBUG_NODE(property);
-    BOOST_SPIRIT_DEBUG_NODE(node);
-    BOOST_SPIRIT_DEBUG_NODE(tree);
+    BOOST_SPIRIT_DEBUG_NODES(
+        (property)
+        (description)
+        (identifier)
+        (assignment)
+        );
   }
 
   typedef qi::rule<Iterator, PValue(), Skipper> value_rule_t;
