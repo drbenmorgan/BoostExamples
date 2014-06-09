@@ -15,5 +15,7 @@ baz : {
 
 bob:real =1
 
+@description "Make your choice"
+choice : bool = false
 
 

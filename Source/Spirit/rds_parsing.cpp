@@ -38,6 +38,7 @@ struct Property;
 typedef std::vector<Property> PList;
 typedef boost::variant<int,
                        double,
+                       bool,
                        std::string,
                        std::vector<int>,
                        std::vector<double>,
@@ -101,15 +102,14 @@ template <typename Iterator, typename Skipper>
 struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   PropertyParser() : PropertyParser::base_type(property) {
     property %= qi::omit[-description] >> identifier > ':' > assignment;
-    description %= "@description" > quotedstring;
 
+    description %= "@description" > quotedstring;
     quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
 
     assignment %= node | tree;
 
-    // real has to come before int because the parser will otherwise
-    // parse the int part using the intvalue parser!
+    // Node types - order in which they are added shouldn't matter...
     node %= qi::omit[nodetypes[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
 
     intnode %= qi::int_ | '[' > qi::int_ % ',' > ']';
@@ -118,9 +118,13 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
     realnode %= qi::double_ | '[' > qi::double_ % ',' > ']';
     nodetypes.add("real", &realnode);
 
+    boolnode %= qi::bool_;
+    nodetypes.add("bool", &boolnode);
+
     stringnode %= quotedstring | '[' > quotedstring % ',' > ']';
     nodetypes.add("string", &stringnode);
 
+    // tree of nodes isn't typed because grammar is distinct...
     tree %= '{' > property % ',' > '}';
 
     BOOST_SPIRIT_DEBUG_NODE(property);
@@ -142,6 +146,7 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   qi::symbols<char, value_rule_t*> nodetypes;
   value_rule_t intnode;
   value_rule_t realnode;
+  value_rule_t boolnode;
   value_rule_t stringnode;
 };
 
