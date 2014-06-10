@@ -62,19 +62,19 @@ typedef boost::variant<int,
 //
 // TODO : Investigate these options, and whether the "description"
 // is needed at all internally (probably is...)
-struct PAtom {
+struct PropertyValue {
   std::string id;
   PValue value;
 };
 
 struct Property {
+  PropertyValue value;
   std::string desc;
-  PAtom value;
 };
 
 
 BOOST_FUSION_ADAPT_STRUCT(
-    PAtom,
+    PropertyValue,
     (std::string, id)
     (PValue, value)
     )
@@ -82,7 +82,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 BOOST_FUSION_ADAPT_STRUCT(
     Property,
     (std::string, desc)
-    (PAtom, value)
+    (PropertyValue, value)
     )
 
 
@@ -139,6 +139,11 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
     // combination of sequence and expectation ops so that the
     // attribute thats exposed is tuple<Desc, tuple<Id, Value> >
     // hence the split into two fusion adapted structs
+    // Otherwise, need to transform the attribute to
+    // tuple<Id, tuple<Value, Desc>>
+    // or somehow flatten it to
+    // tuple<Desc, Id, Value>
+    // with the Fusion struct adaption changing the order
     property %= -description >> (identifier > ':' > assignment);
 
     description %= "@description" > quotedstring;
