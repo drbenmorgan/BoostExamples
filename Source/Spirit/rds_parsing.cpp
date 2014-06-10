@@ -34,6 +34,9 @@
 #include <boost/fusion/include/std_pair.hpp>
 namespace qi = boost::spirit::qi;
 
+// This project
+#include "BitsetGrammar.hpp"
+
 struct Property;
 typedef std::vector<Property> PList;
 
@@ -47,6 +50,7 @@ typedef std::pair<double, std::string> Quantity;
 typedef boost::variant<int,
                        double,
                        bool,
+                       boost::dynamic_bitset<>,
                        std::string,
                        Quantity,
                        std::vector<int>,
@@ -185,18 +189,25 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
     stringnode %= quotedstring | '[' > quotedstring % ',' > ']';
     nodetypes.add("string", &stringnode);
 
+    bitsetnode %= bitset_;
+    nodetypes.add("bitset", &bitsetnode);
+
     quantity_ %= qi::double_ > qi::lexeme[+(+qi::char_("a-zA-Z") >> qi::char_("^") >> -qi::char_('-') >> +qi::digit)];
     quantitynode %= quantity_;
     nodetypes.add("quantity", &quantitynode);
 
     // tree of nodes isn't typed because grammar is distinct...
-    tree %= '{' > property % ',' > '}';
+    // In past, used list parser (property % ','), but improved
+    // skipper seems to be ok with "one or more"
+    tree %= '{' > +property > '}';
 
     BOOST_SPIRIT_DEBUG_NODES(
         (property)
         (description)
         (identifier)
         (assignment)
+        (node)
+        (tree)
         );
   }
 
@@ -213,11 +224,17 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
 
   qi::rule<Iterator, PValue(), Skipper, qi::locals<value_rule_t*> > node;
   qi::symbols<char, value_rule_t*> nodetypes;
+
   qi::rule<Iterator, int()> strictint_;
   value_rule_t intnode;
+
   value_rule_t realnode;
   value_rule_t boolnode;
   value_rule_t stringnode;
+
+  BoostExamples::BitsetParser<Iterator> bitset_;
+  value_rule_t bitsetnode;
+
   qi::rule<Iterator, Quantity(), Skipper> quantity_;
   value_rule_t quantitynode;
 };
