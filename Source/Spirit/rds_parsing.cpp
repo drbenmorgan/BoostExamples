@@ -36,10 +36,19 @@ namespace qi = boost::spirit::qi;
 
 struct Property;
 typedef std::vector<Property> PList;
+
+/// Dumb quantity for "value + unit" style 'dimensioned' variables.
+/// NB: not clear what to use internally, nor if there should be
+/// more detail to this quantity type to help whichever internal
+/// system is used...
+typedef std::pair<double, std::string> Quantity;
+
+
 typedef boost::variant<int,
                        double,
                        bool,
                        std::string,
+                       Quantity,
                        std::vector<int>,
                        std::vector<double>,
                        std::vector<std::string>,
@@ -95,6 +104,10 @@ struct ostream_visitor : public boost::static_visitor<void> {
 
   template <typename T>
   void operator()(const T& arg) const {os_ << "value(" << arg << ")";}
+
+  void operator()(const Quantity& arg) const {
+    os_ << "quantity(" << arg.first << " " << arg.second << ")";
+  }
 
   template<typename U>
   void operator()(const std::vector<U>& arg) const {
@@ -172,6 +185,10 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
     stringnode %= quotedstring | '[' > quotedstring % ',' > ']';
     nodetypes.add("string", &stringnode);
 
+    quantity_ %= qi::double_ > qi::lexeme[+(+qi::char_("a-zA-Z") >> qi::char_("^") >> -qi::char_('-') >> +qi::digit)];
+    quantitynode %= quantity_;
+    nodetypes.add("quantity", &quantitynode);
+
     // tree of nodes isn't typed because grammar is distinct...
     tree %= '{' > property % ',' > '}';
 
@@ -201,6 +218,8 @@ struct PropertyParser : qi::grammar<Iterator, Property(), Skipper> {
   value_rule_t realnode;
   value_rule_t boolnode;
   value_rule_t stringnode;
+  qi::rule<Iterator, Quantity(), Skipper> quantity_;
+  value_rule_t quantitynode;
 };
 
 /// PropertyDocumentParser : parse a properties document
