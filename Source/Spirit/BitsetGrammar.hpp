@@ -57,15 +57,17 @@ class BitsetParser : public bsqi::grammar<Iterator, boost::dynamic_bitset<>()> {
  public:
   BitsetParser() : BitsetParser::base_type(bitset) {
     // bitsets can be synthesized as a sequence of 0s and 1s
-    // or as hexadecimal. We parse as strings and then use
-    // phoenix conversion specialized for hex/bit notation.
+    // or as hexadecimal. We place hex first to avoid partial parse
+    // by bits, leaving the trailing 'xHEXDIGITS'.
+    // We parse as strings and then use phoenix conversion specialized
+    // for hex/bit notation.
     // This split is used so that attributes have correct
     // compatibility:
     // http://boost.2283326.n4.nabble.com/Spirit-Qi-variant-with-std-string-td2715777.html
     // NB: I'm not a spirit expert, so likely this can be done better!
-    bitset = bits[bsqi::_val = bsphx::construct<boost::dynamic_bitset<> >(bsqi::_1)]
+    bitset = hex[bsqi::_val = HexConverter_(bsqi::_1)]
              |
-             hex[bsqi::_val = HexConverter_(bsqi::_1)];
+             bits[bsqi::_val = bsphx::construct<boost::dynamic_bitset<> >(bsqi::_1)];
 
     bits %= bsqi::repeat(1,64)[bsqi::char_("01")];
     hex  %= bsqi::string("0x") > bsqi::repeat(1,16)[bsascii::xdigit];
