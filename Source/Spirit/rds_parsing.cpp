@@ -99,6 +99,8 @@ BOOST_FUSION_ADAPT_STRUCT(
     )
 
 
+std::ostream& operator<<(std::ostream& os, const Property& p);
+std::ostream& operator<<(std::ostream& os, const PList& d);
 
 /// Visitor that outputs the property value to a given ostream
 struct ostream_visitor : public boost::static_visitor<void> {
@@ -124,6 +126,10 @@ struct ostream_visitor : public boost::static_visitor<void> {
     }
     os_ << "}";
   }
+
+  void operator()(const PList& arg) const {
+    os_ << "properties {\n" << arg << "\n}";
+  }
 };
 
 // Output streams for convenience
@@ -145,7 +151,6 @@ std::ostream& operator<<(std::ostream& os, const PList& d) {
   }
   return os;
 }
-
 
 /// PropertyParser : parse a single property
 template <typename Iterator, typename Skipper>
