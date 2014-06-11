@@ -80,6 +80,95 @@ namespace warwick {
   class Property;
 }
 
+//----------------------------------------------------------------------
+// Value should have specific behaviour, so create objetc for this
+// Whilst mostly based on Boost variant, it adds some special
+// behaviour
+class value_t {
+ public:
+  // typedef for what actually holds the value
+  typedef boost::variant<boost::blank,
+                         int,
+                         double,
+                         bool,
+                         std::string> holder;
+
+ public:
+  /// Default constructor
+  value_t();
+
+  /// Allow construction from any of the allowed types
+  template <typename T>
+  value_t(const T& value, typename boost::enable_if<
+                            boost::mpl::contains<holder::types, T>
+                            >::type* = 0);
+
+  /// Allow construction from string like type
+  explicit value_t(const char* value);
+
+  /// Can allow compiler to handle other stuff for now
+
+  /// Get method, but only for held types
+  template <typename T>
+  typename boost::enable_if<boost::mpl::contains<holder::types, T>, T>::type
+  get_value();
+
+  /// Set should probably follow that of variant, plus extra typechecking
+  template <typename T>
+  typename boost::enable_if<boost::mpl::contains<holder::types, T>, void>::type
+  set_value(const T& v);
+
+  /// Return true if this value can hold a value of the supplied type
+  template <typename T>
+  bool can_hold() const;
+
+  /// Return true if the currently held value is of the supplied type
+  template <typename T>
+  bool holds_type() const;
+
+  /// Return true if the value is a valid type
+  bool is_set() const;
+
+ private:
+  /// The actual value
+  holder value_;
+};
+
+value_t::value_t() {}
+
+template <typename T>
+value_t::value_t(const T& value, typename boost::enable_if<boost::mpl::contains<holder::types, T> >::type*) : value_(value) {}
+
+value_t::value_t(const char* value) : value_(std::string(value)) {}
+
+template <typename T>
+typename boost::enable_if<boost::mpl::contains<value_t::holder::types, T>, T>::type
+value_t::get_value() {
+  return boost::get<T>(value_);
+}
+
+template <typename T>
+typename boost::enable_if<boost::mpl::contains<value_t::holder::types, T>, void>::type
+value_t::set_value(const T& v) {
+  value_ = v;
+}
+
+template <typename T>
+bool value_t::can_hold() const {
+  return boost::mpl::contains<holder::types, T>::value;
+}
+
+template <typename T>
+bool value_t::holds_type() const {
+  return typeid(T) == value_.type();
+}
+
+bool value_t::is_set() const {
+  return value_.which() == 0 ? false : true;
+}
+//----------------------------------------------------------------------
+//
+
 
 namespace warwick {
 /// Property object mapping between a name and a value
@@ -103,10 +192,10 @@ class Property {
   Property();
   explicit Property(const key_type& name);
   ~Property();
-  
+
   bool operator<(const warwick::Property& rhs) const;
   bool operator==(const warwick::Property& rhs) const;
-  
+
   // assignment from any type in value_type, but no others?
   template <typename T>
   typename boost::enable_if<boost::mpl::contains<Property::value_type::types, T>, Property&>::type
@@ -179,7 +268,7 @@ Property::~Property() {
 bool Property::operator<(const warwick::Property& rhs) const {
   return Key < rhs.Key;
 }
-  
+
 bool Property::operator==(const warwick::Property& rhs) const {
   return Key == rhs.Key;
 }
@@ -202,17 +291,17 @@ bool test_collection() {
   std::set<warwick::Property> pset;
   pset.insert(warwick::Property("foo"));
   pset.insert(warwick::Property("bar"));
-  
+
   return true;
 }
 
 int main() {
   std::cout << "[boost-examples]" << std::endl;
   std::cout << ">>> testing property objects" <<std::endl;
-  
+
   warwick::Property p("foo");
   p = 1.0;
-  
+
   p = warwick::Property("bar");
 
   try {
@@ -220,7 +309,7 @@ int main() {
   } catch (const boost::bad_get& e) {
     std::cerr << "bad get caught" << std::endl;
   }
-  
+
   test_collection();
   return 0;
 }
