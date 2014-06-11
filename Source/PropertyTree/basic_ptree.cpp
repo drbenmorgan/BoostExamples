@@ -16,26 +16,7 @@
 #include "boost/property_tree/ptree.hpp"
 
 // This Project
-
-
-// Display the hierarchy of an in-memory ptree
-void display(const boost::property_tree::ptree& t, int depth=0) {
-  BOOST_FOREACH(boost::property_tree::ptree::value_type const& v, t.get_child("")) {
-    // Process current node
-    std::string nodeStr = t.get<std::string>(v.first);
-
-    std::cout << std::string("").assign(depth*2, ' ') << "* ";
-    std::cout << v.first;
-    if (nodeStr.length() > 0) {
-      std::cout<< "=\"" << t.get<std::string>(v.first) << "\"";
-    }
-    std::cout << std::endl;
-    // Handle subtree
-    boost::property_tree::ptree subtree = v.second;
-    display(subtree, depth+1);
-  }
-}
-
+#include "PropertyTreeTools.hpp"
 
 int main()
 {
