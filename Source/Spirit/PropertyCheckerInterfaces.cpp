@@ -1,5 +1,4 @@
-// datatype-grammar - simple tests of spirit::qi grammar for LPC
-// properties/multiproperties datatype
+// - PropertyCheckerInterfaces.cpp - Implementation
 //
 // Copyright (c) 2014 by Ben Morgan <bmorgan.warwick@gmail.com>
 // Copyright (c) 2014 by The University of Warwick
@@ -10,6 +9,7 @@
 
 // Standard Library
 #include <iostream>
+#include <fstream>
 #include <string>
 
 // Third Party
@@ -18,8 +18,26 @@
 // This Project
 #include "PropertyParser.hpp"
 
-int main(int argc, const char *argv[])
-{
+int filereader_main(const char* filename) {
+  std::ifstream input(filename);
+  input.unsetf(std::ios::skipws);
+
+  warwick::PropertyList config;
+
+  if (parse_document(input, config)) {
+    std::cout << "Successful parse of \"" << filename << "\"" << std::endl;
+    std::cout << "Document = " << config << std::endl;
+    return 0;
+  } else {
+    // NB, even failure may leave us with a partially config object...
+    // for example, key may have been set but nothing else.
+    std::cerr << "Failed to parse \"" << filename << "\"" << std::endl;
+    return 1;
+  }
+}
+
+
+int cli_main() {
   std::cout << "[datatype-grammar] qi parsing of properties\n";
   std::cout << "Type [q or Q] to quit\n\n";
 
@@ -45,6 +63,6 @@ int main(int argc, const char *argv[])
   }
 
   std::cout << "[quit]\n";
-
   return 0;
 }
+
