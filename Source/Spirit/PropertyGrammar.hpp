@@ -177,6 +177,8 @@ struct PropertyGrammar : qi::grammar<Iterator, warwick::Property(), Skipper> {
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
     quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
 
+    description %= "@description" > quotedstring;
+
     integer %= qi::int_ | ('[' > qi::int_ % "," > ']');
     typedvalue.add("int", &integer);
 
@@ -203,7 +205,7 @@ struct PropertyGrammar : qi::grammar<Iterator, warwick::Property(), Skipper> {
     typedassignment = qi::omit[typedvalue[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
 
     // Now the actual grammar of the property
-    property %= identifier > ':' > typedassignment;
+    property %= qi::omit[-description] >> (identifier > ':' > typedassignment);
 
     BOOST_SPIRIT_DEBUG_NODE(property);
     BOOST_SPIRIT_DEBUG_NODE(typedassignment);
@@ -218,7 +220,8 @@ struct PropertyGrammar : qi::grammar<Iterator, warwick::Property(), Skipper> {
   typedef qi::rule<Iterator, warwick::Property::value_type(), Skipper> value_rule_t;
 
   qi::rule<Iterator, std::string()> identifier;
-  qi::rule<Iterator, std::string()> quotedstring;
+  qi::rule<Iterator, std::string(), Skipper> quotedstring;
+  qi::rule<Iterator, std::string(), Skipper> description;
   value_rule_t integer;
   value_rule_t real;
   value_rule_t string;
