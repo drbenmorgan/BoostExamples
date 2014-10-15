@@ -172,8 +172,8 @@ namespace phx = boost::phoenix;
 // property     <- identifier ':' (integer / real / bool / string)
 //
 template <typename Iterator, typename Skipper>
-struct PropertyParser : qi::grammar<Iterator, warwick::Property(), Skipper> {
-  PropertyParser() : PropertyParser::base_type(property) {
+struct PropertyGrammar : qi::grammar<Iterator, warwick::Property(), Skipper> {
+  PropertyGrammar() : PropertyGrammar::base_type(property) {
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
     quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
 
@@ -249,7 +249,7 @@ struct PropertyListGrammar :
     BOOST_SPIRIT_DEBUG_NODE(document);
   }
 
-  PropertyParser<Iterator, Skipper> property;
+  PropertyGrammar<Iterator, Skipper> property;
   qi::rule<Iterator, warwick::PropertyList(), Skipper> document;
 };
 

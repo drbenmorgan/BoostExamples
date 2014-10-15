@@ -22,7 +22,7 @@
 bool parse_string(const std::string& input, warwick::Property& output) {
   typedef std::string::const_iterator Iterator;
   typedef warwick::PropertySkipper<Iterator> Skipper;
-  typedef warwick::PropertyParser<Iterator, Skipper> Grammar;
+  typedef warwick::PropertyGrammar<Iterator, Skipper> Grammar;
 
   Iterator first(input.begin());
   Iterator last(input.end());
@@ -52,7 +52,7 @@ bool parse_string(const std::string& input, warwick::Property& output) {
 bool parse_istream(std::istream& input, warwick::Property& output) {
   typedef boost::spirit::istream_iterator Iterator;
   typedef warwick::PropertySkipper<Iterator> Skipper;
-  typedef warwick::PropertyParser<Iterator, Skipper> Grammar;
+  typedef warwick::PropertyGrammar<Iterator, Skipper> Grammar;
 
   Iterator first(input);
   Iterator last;
