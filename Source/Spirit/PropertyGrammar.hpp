@@ -171,28 +171,19 @@ namespace phx = boost::phoenix;
 // string       <- 'string' EQUALS (string_ / stringsequence)
 // property     <- identifier ':' (integer / real / bool / string)
 //
-template <typename Iterator>
-struct PropertyParser : qi::grammar<Iterator, warwick::Property(), qi::blank_type> {
+template <typename Iterator, typename Skipper>
+struct PropertyParser : qi::grammar<Iterator, warwick::Property(), Skipper> {
   PropertyParser() : PropertyParser::base_type(property) {
     identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
     quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
 
-    integer %= qi::int_
-               | qi::skip(qi::space)[
-                   '[' > qi::int_ % "," > ']'
-                  ];
+    integer %= qi::int_ | ('[' > qi::int_ % "," > ']');
     typedvalue.add("int", &integer);
 
-    real %= qi::double_
-            | qi::skip(qi::space)[
-                '[' > qi::double_ % "," > ']'
-              ];
+    real %= qi::double_ | ('[' > qi::double_ % "," > ']');
     typedvalue.add("real", &real);
 
-    string %= quotedstring
-              | qi::skip(qi::space)[
-                  '[' > quotedstring % ',' > ']'
-                ];
+    string %= quotedstring | ('[' > quotedstring % ',' > ']');
     typedvalue.add("string", &string);
 
     boolean %= qi::bool_;
@@ -224,7 +215,7 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), qi::blank_typ
                            );
   }
 
-  typedef qi::rule<Iterator, warwick::Property::value_type(), qi::blank_type> value_rule_t;
+  typedef qi::rule<Iterator, warwick::Property::value_type(), Skipper> value_rule_t;
 
   qi::rule<Iterator, std::string()> identifier;
   qi::rule<Iterator, std::string()> quotedstring;
@@ -239,10 +230,10 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), qi::blank_typ
 
   qi::symbols<char, value_rule_t*> typedvalue;
 
-  qi::rule<Iterator,warwick::Property::value_type(), qi::blank_type,
+  qi::rule<Iterator,warwick::Property::value_type(), Skipper,
       qi::locals<value_rule_t*> > typedassignment;
 
-  qi::rule<Iterator, warwick::Property(), qi::blank_type> property;
+  qi::rule<Iterator, warwick::Property(), Skipper> property;
 };
 
 
@@ -250,20 +241,33 @@ struct PropertyParser : qi::grammar<Iterator, warwick::Property(), qi::blank_typ
 // A properties "document" is zero or more properties.
 // For now we just stuff these into a vector
 //
-template <typename Iterator>
+template <typename Iterator, typename Skipper>
 struct PropertyListGrammar :
-    public qi::grammar<Iterator, warwick::PropertyList(), qi::blank_type> {
+    public qi::grammar<Iterator, warwick::PropertyList(), Skipper> {
   PropertyListGrammar() : PropertyListGrammar::base_type(document) {
-    document %= qi::omit[*qi::space]
-                >> property_rule % +qi::char_("\n")
-                >> qi::omit[*qi::space]
-                > qi::eoi;
+    document %= *property;
     BOOST_SPIRIT_DEBUG_NODE(document);
   }
 
-  PropertyParser<Iterator> property_rule;
-  qi::rule<Iterator, warwick::PropertyList(), qi::blank_type> document;
+  PropertyParser<Iterator, Skipper> property;
+  qi::rule<Iterator, warwick::PropertyList(), Skipper> document;
 };
+
+
+/// PropertySkipper : custom skipper that skips whitespace and
+/// Bash/Python style comments
+template <typename Iterator>
+struct PropertySkipper : public qi::grammar<Iterator> {
+  PropertySkipper() : PropertySkipper::base_type(skip) {
+    skip %= qi::space | comment;
+    comment %= qi::lexeme['#' >> *(qi::char_ - qi::eol) >> qi::eol];
+  }
+
+  qi::rule<Iterator> skip;
+  qi::rule<Iterator> comment;
+};
+
+
 
 } // namespace warwick
 

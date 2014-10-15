@@ -20,16 +20,19 @@
 #include <boost/spirit/include/support_istream_iterator.hpp>
 
 bool parse_string(const std::string& input, warwick::Property& output) {
-  std::string::const_iterator first(input.begin());
-  std::string::const_iterator last(input.end());
+  typedef std::string::const_iterator Iterator;
+  typedef warwick::PropertySkipper<Iterator> Skipper;
+  typedef warwick::PropertyParser<Iterator, Skipper> Grammar;
 
-  warwick::PropertyParser<std::string::const_iterator> g;
+  Iterator first(input.begin());
+  Iterator last(input.end());
+
   // apply eoi after property parser because here there should be
   // no trailing input
   bool result = warwick::qi::phrase_parse(first,
       last,
-      g > warwick::qi::eoi,
-      warwick::qi::blank,
+      Grammar() > warwick::qi::eoi,
+      Skipper(),
       output
       );
 
@@ -47,16 +50,19 @@ bool parse_string(const std::string& input, warwick::Property& output) {
 
 
 bool parse_istream(std::istream& input, warwick::Property& output) {
-  boost::spirit::istream_iterator first(input);
-  boost::spirit::istream_iterator last;
+  typedef boost::spirit::istream_iterator Iterator;
+  typedef warwick::PropertySkipper<Iterator> Skipper;
+  typedef warwick::PropertyParser<Iterator, Skipper> Grammar;
 
-  warwick::PropertyParser<boost::spirit::istream_iterator> g;
+  Iterator first(input);
+  Iterator last;
+
   // apply eoi after property parser because here there should be
   // no trailing input
   bool result = warwick::qi::phrase_parse(first,
       last,
-      g > warwick::qi::eoi,
-      warwick::qi::blank,
+      Grammar() > warwick::qi::eoi,
+      Skipper(),
       output
       );
 
@@ -73,16 +79,19 @@ bool parse_istream(std::istream& input, warwick::Property& output) {
 }
 
 bool parse_document(std::istream& input, warwick::PropertyList& output) {
-  boost::spirit::istream_iterator first(input);
-  boost::spirit::istream_iterator last;
+  typedef boost::spirit::istream_iterator Iterator;
+  typedef warwick::PropertySkipper<Iterator> Skipper;
+  typedef warwick::PropertyListGrammar<Iterator, Skipper> Grammar;
 
-  warwick::PropertyListGrammar<boost::spirit::istream_iterator> g;
+  Iterator first(input);
+  Iterator last;
+
   // apply eoi after property parser because here there should be
   // no trailing input
   bool result = warwick::qi::phrase_parse(first,
       last,
-      g,
-      warwick::qi::blank,
+      Grammar(),
+      Skipper(),
       output
       );
 
