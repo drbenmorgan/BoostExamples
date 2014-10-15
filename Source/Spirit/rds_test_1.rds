@@ -6,9 +6,9 @@ bar :int= 2
 blob : string = "blobby blobby"
 
 baz : {
-  a :int = 1,
+  a :int = 1
   b : {
-    alpha:int = 314,
+    alpha:int = 314
     beta:int = 42
     }
 }

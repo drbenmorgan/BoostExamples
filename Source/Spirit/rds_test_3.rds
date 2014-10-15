@@ -1,13 +1,15 @@
 bob:real =1
+d : int = 2
+g : int = [2,3,4]
 
 @description "Configures foo"
 foo :int = 42 
 
 @description "Baz subtree" baz : {
-  a :int = 1,
+  a :int = 1
   b : {
     @description "Bits of b"
-    alpha:int = 314,
+    alpha:int = 314
     beta:int = 42
     }
 }

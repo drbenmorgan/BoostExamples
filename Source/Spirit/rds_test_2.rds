@@ -8,10 +8,10 @@ bravo : int =[1,
 charlie : real =3.14
 
 delta : {
-  echo : int = [1,2,3,4],
-  foxtrot : int = 1,
+  echo : int = [1,2,3,4]
+  foxtrot : int = 1
   november : {
-    a : real =1,
+    a : real =1
     b : int =1
   }
 }

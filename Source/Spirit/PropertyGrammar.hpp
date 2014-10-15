@@ -158,57 +158,59 @@ namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 namespace phx = boost::phoenix;
 
-// Try to make grammar of scalars/sequence easier - implies no
-// backward compatibility
-//
-// alpha        <- [a-zA-Z]
-// alphanumeric <- (alpha / [0-9])
-// identifier   <- alpha / (alphanumeric | '_')*
-// integer      <- 'int' EQUALS (int_ / intsequence)
-// intsequence  <- '[' int_ (',' int_)* ']'
-// real         <- 'real' EQUALS (real_ / realsequence)
-// bool         <- 'bool' EQUALS bool_
-// string       <- 'string' EQUALS (string_ / stringsequence)
-// property     <- identifier ':' (integer / real / bool / string)
-//
 template <typename Iterator, typename Skipper>
-struct PropertyGrammar : qi::grammar<Iterator, warwick::Property(), Skipper> {
+class PropertyGrammar : public qi::grammar<Iterator, warwick::Property(), Skipper> {
+ public:
   PropertyGrammar() : PropertyGrammar::base_type(property) {
-    identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
-    quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
+    // The fundamental property.
+    // Note that we omit the description for now.
+    // TODO: Note that including description will result in slightly
+    // awkward parser attribute: tuple<Desc, tuple<Id, Value> >
+    // which is significant when adapting to the in-memory object
+    property %= qi::omit[-description] >> (identifier > ':' > assignment);
 
     description %= "@description" > quotedstring;
 
-    integer %= qi::int_ | ('[' > qi::int_ % "," > ']');
-    typedvalue.add("int", &integer);
+    identifier %= qi::alpha >> *(qi::alnum | qi::char_('_'));
+    quotedstring %= qi::lexeme['"' >> +(qi::char_ - '"') >> '"'];
 
-    real %= qi::double_ | ('[' > qi::double_ % "," > ']');
-    typedvalue.add("real", &real);
+    // assignment may be a terminal node or a subtree
+    assignment %= node | tree;
 
-    string %= quotedstring | ('[' > quotedstring % ',' > ']');
-    typedvalue.add("string", &string);
+    // Nodes are typed values
+    // Uses the 'Nabielek Trick' to select a parser for the type
+    // parsed by the nodetypes symbol rule.
+    node %= qi::omit[nodetypes[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
 
-    boolean %= qi::bool_;
-    typedvalue.add("bool", &boolean);
+    // Tree node does not need a type spec because grammar is
+    // distinct
+    // TODO: allow use of comma separation ala JSON?
+    tree %= '{' > +property >'}';
+
+    // - Node types built of fundamental parsers
+    // Integers need a little care so that qi's int_ parser doesn't
+    // parse doubles and leave the decimal part dangling
+    strictint_ %= qi::int_ >> !qi::double_;
+    intnode %= strictint_ | ('[' > strictint_ % "," > ']');
+    nodetypes.add("int", &intnode);
+
+    realnode %= qi::double_ | ('[' > qi::double_ % "," > ']');
+    nodetypes.add("real", &realnode);
+
+    stringnode %= quotedstring | ('[' > quotedstring % ',' > ']');
+    nodetypes.add("string", &stringnode);
+
+    boolnode %= qi::bool_;
+    nodetypes.add("bool", &boolnode);
 
     // TODO : check why we have to do this two level definition
     // i.e., can't just assign bitset to the BitsetParser instance
     // *suspect* it's because we're using pointers-to-rules
-    bitset %= bitset_rule;
-    typedvalue.add("bitset", &bitset);
+    bitsetnode %= bitset_;
+    nodetypes.add("bitset", &bitsetnode);
 
-    // A property can contain a property set
-    property_set = ('{' > property % ',' > '}')[qi::_val = qi::_1];
-    typedvalue.add("pset", &property_set);
-
-    // Assignment uses rule appropriate to parsed type keyword
-    typedassignment = qi::omit[typedvalue[qi::_a = qi::_1]] > '=' > qi::lazy(*qi::_a);
-
-    // Now the actual grammar of the property
-    property %= qi::omit[-description] >> (identifier > ':' > typedassignment);
-
-    BOOST_SPIRIT_DEBUG_NODE(property);
-    BOOST_SPIRIT_DEBUG_NODE(typedassignment);
+    //BOOST_SPIRIT_DEBUG_NODE(property);
+    //BOOST_SPIRIT_DEBUG_NODE(typedassignment);
     // Because we use expectations, provide simple error handler
     qi::on_error<qi::fail>(property,
                            std::cout << phx::val("Error! Expecting ")
@@ -217,41 +219,56 @@ struct PropertyGrammar : qi::grammar<Iterator, warwick::Property(), Skipper> {
                            );
   }
 
+ private:
   typedef qi::rule<Iterator, warwick::Property::value_type(), Skipper> value_rule_t;
+  typedef qi::rule<Iterator, warwick::PropertyList(), Skipper> tree_rule_t;
 
-  qi::rule<Iterator, std::string()> identifier;
-  qi::rule<Iterator, std::string(), Skipper> quotedstring;
-  qi::rule<Iterator, std::string(), Skipper> description;
-  value_rule_t integer;
-  value_rule_t real;
-  value_rule_t string;
-  value_rule_t boolean;
-  BoostExamples::BitsetParser<Iterator> bitset_rule;
-  value_rule_t bitset;
-
-  value_rule_t property_set;
-
-  qi::symbols<char, value_rule_t*> typedvalue;
-
-  qi::rule<Iterator,warwick::Property::value_type(), Skipper,
-      qi::locals<value_rule_t*> > typedassignment;
-
+  /// qi rule for a property
   qi::rule<Iterator, warwick::Property(), Skipper> property;
+
+  /// qi rule for property identifier
+  qi::rule<Iterator, std::string()> identifier;
+
+  /// qi rule for a quoted string
+  qi::rule<Iterator, std::string(), Skipper> quotedstring;
+
+  /// qi rule for a property description directive
+  qi::rule<Iterator, std::string(), Skipper> description;
+
+
+  value_rule_t assignment;
+  qi::rule<Iterator,warwick::Property::value_type(), Skipper,
+      qi::locals<value_rule_t*> > node;
+  tree_rule_t tree;
+
+  qi::symbols<char, value_rule_t*> nodetypes;
+
+  qi::rule<Iterator, int()> strictint_;
+  value_rule_t intnode;
+  value_rule_t realnode;
+  value_rule_t stringnode;
+  value_rule_t boolnode;
+  BoostExamples::BitsetParser<Iterator> bitset_;
+  value_rule_t bitsetnode;
 };
 
 
 //----------------------------------------------------------------------
 // A properties "document" is zero or more properties.
 // For now we just stuff these into a vector
-//
+// This is distinct, because otherwise we'd have to always have a root
+// node for the tree and Properties allow a flat namespace (i.e. implicit
+// unamed root node)
 template <typename Iterator, typename Skipper>
-struct PropertyListGrammar :
+class PropertyListGrammar :
     public qi::grammar<Iterator, warwick::PropertyList(), Skipper> {
+ public:
   PropertyListGrammar() : PropertyListGrammar::base_type(document) {
     document %= *property;
-    BOOST_SPIRIT_DEBUG_NODE(document);
+    //BOOST_SPIRIT_DEBUG_NODE(document);
   }
 
+ private:
   PropertyGrammar<Iterator, Skipper> property;
   qi::rule<Iterator, warwick::PropertyList(), Skipper> document;
 };
@@ -270,8 +287,5 @@ struct PropertySkipper : public qi::grammar<Iterator> {
   qi::rule<Iterator> comment;
 };
 
-
-
 } // namespace warwick
-
 
