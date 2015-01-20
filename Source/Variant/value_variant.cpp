@@ -163,6 +163,44 @@ bool value_t::is_sequence() const {
   return boost::apply_visitor(value_t::is_sequence_visitor<T>(), value_);
 }
 
+
+//----------------------------------------------------------------------
+// Strict value - like a value, but can only have one type
+// can be assigned from a value, but only if types match
+
+template <typename T>
+struct NoValidation {
+  static void validate(const T& v) {}
+};
+
+
+template <typename T, template<class> class ValidationPolicy = NoValidation>
+class strict_value_t {
+ public:
+  strict_value_t() {}
+
+  template<typename U>
+  typename boost::enable_if<boost::is_same<U, T>, strict_value_t>::type&
+  operator=(const U& v) {
+    T tmp(v);
+    ValidationPolicy<T>::validate(value_);
+    value_ = tmp;
+    return *this;
+  }
+
+  strict_value_t& operator=(const value_t& v) {
+    T tmp(v.as<T>());
+    ValidationPolicy<T>::validate(value_);
+    value_ = tmp;
+    return *this;
+  }
+
+ private:
+  T value_;
+};
+
+
+
 //----------------------------------------------------------------------
 // Test case
 #define BOOST_TEST_MODULE ValueVariantTest
@@ -244,5 +282,15 @@ BOOST_AUTO_TEST_CASE(scalarvector) {
   BOOST_REQUIRE(!v.is_sequence<double>());
 
   BOOST_REQUIRE_EQUAL((*v.begin<int>()), 5);
+}
+
+BOOST_AUTO_TEST_CASE(strict) {
+  value_t v = 24;
+
+  strict_value_t<double> s;
+
+  BOOST_REQUIRE_THROW(s = v, boost::bad_get);
+  s = 24.0;
+
 }
 
