@@ -18,6 +18,36 @@
 // This Project
 #include "PropertyTreeTools.hpp"
 
+#include "boost/optional.hpp"
+template <typename TTree>
+boost::optional<TTree&> get_parent_optional(TTree& tree,
+                                            typename TTree::path_type path)
+{
+   if (path.empty())
+      return boost::optional<TTree&>();
+
+   typename TTree::key_type root = path.reduce();
+
+   if (path.empty())
+   {
+      return (tree.find(root) != tree.not_found()) ?
+         boost::optional<TTree&>(tree) : boost::optional<TTree&>();
+   }
+
+   std::pair<typename TTree::assoc_iterator, typename TTree::assoc_iterator> range =
+      tree.equal_range(root);
+
+   for (typename TTree::assoc_iterator it = range.first; it != range.second; ++it)
+   {
+      boost::optional<TTree&> result = get_parent_optional(it->second, path);
+      if (result)
+         return result;
+   }
+
+   return boost::optional<TTree&>();
+}
+
+
 int main()
 {
   typedef boost::property_tree::ptree PropertyTree;
@@ -44,5 +74,13 @@ int main()
   PTree.put_child("foo.logging", subTree);
 
   display(PTree);
+
+  boost::optional<PropertyTree&> parent = get_parent_optional(PTree, PropertyTree::path_type("foo.logging.channel"));
+  if (parent) {
+    std::cout << "parent of foo.logging.channel: " << std::endl;
+   display(*parent);
+}
+
+  // can
   return 0;
 }

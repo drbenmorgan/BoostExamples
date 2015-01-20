@@ -15,12 +15,12 @@
 void display(const boost::property_tree::ptree& t, int depth) {
   BOOST_FOREACH(boost::property_tree::ptree::value_type const& v, t.get_child("")) {
     // Process current node
-    std::string nodeStr = t.get<std::string>(v.first);
+    std::string nodeData = t.get<std::string>(v.first);
 
     std::cout << std::string("").assign(depth*2, ' ') << "* ";
     std::cout << v.first;
-    if (nodeStr.length() > 0) {
-      std::cout<< "=\"" << t.get<std::string>(v.first) << "\"";
+    if (nodeData.length() > 0) {
+      std::cout<< "=\"" << nodeData << "\"";
     }
     std::cout << std::endl;
     // Handle subtree
