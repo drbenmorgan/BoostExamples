@@ -1,6 +1,6 @@
 // basic_variant - trivial test of a boost::variant
 //
-// Copyright (c) 2013 by Ben Morgan <bmorgan.warwick@gmail.com> 
+// Copyright (c) 2013 by Ben Morgan <bmorgan.warwick@gmail.com>
 // Copyright (c) 2013 by The University of Warwick
 //
 // Distributed under the Boost Software License, Version 1.0.
@@ -22,10 +22,10 @@ int main(int, char*[]) {
   bvtype a;
   a = 1;
   std::cout << "(value, type) = " << a << ", " << a.which() << std::endl;
-  
+
   a = 1.;
   std::cout << "(value, type) = " << a << ", " << a.which() << std::endl;
- 
+
   a = "foobar";
   std::cout << "(value, type) = " << a << ", " << a.which() << std::endl;
 

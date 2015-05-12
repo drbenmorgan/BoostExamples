@@ -1,6 +1,6 @@
 // basic_visitor - experiment with simple visitors
 //
-// Copyright (c) 2013 by Ben Morgan <bmorgan.warwick@gmail.com> 
+// Copyright (c) 2013 by Ben Morgan <bmorgan.warwick@gmail.com>
 // Copyright (c) 2013 by The University of Warwick
 //
 // Distributed under the Boost Software License, Version 1.0.
@@ -76,9 +76,9 @@ int main(int argc, char *[]) {
   anyVector.resize(bvVector.size());
   warwick::as_any_visitor convertor;
 
-  std::transform(bvVector.begin(), 
-                 bvVector.end(), 
-                 anyVector.begin(), 
+  std::transform(bvVector.begin(),
+                 bvVector.end(),
+                 anyVector.begin(),
                  boost::apply_visitor(convertor));
 
   // With any this is messy, but it should suceed and output the same
@@ -86,8 +86,8 @@ int main(int argc, char *[]) {
   std::cout << "any : " << boost::any_cast<int>(anyVector[0]) << std::endl;
   std::cout << "any : " << boost::any_cast<double>(anyVector[1]) << std::endl;
   std::cout << "any : " << boost::any_cast<std::string>(anyVector[2]) << std::endl;
-  
- 
+
+
 
   return 0;
 }
