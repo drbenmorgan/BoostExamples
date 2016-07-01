@@ -1,8 +1,8 @@
 # - Main CMake script for BoostExamples
 #
 #-----------------------------------------------------------------------
-# Copyright 2012 Ben Morgan <bmorgan.warwick@gmail.com>
-# Copyright 2012 University of Warwick
+# Copyright 2012-2016 Ben Morgan <bmorgan.warwick@gmail.com>
+# Copyright 2012-2016 University of Warwick
 #
 # Distributed under the Boost Software License, Version 1.0.
 #    (See accompanying file LICENSE_1_0.txt or copy at
@@ -25,19 +25,32 @@ endif()
 #-----------------------------------------------------------------------
 # Project setup
 #
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 project(BoostExamples)
 
 #-----------------------------------------------------------------------
-# Find Boost >= 1.48.0
+# Find Boost >= 1.58.0
 #
-find_package(Boost 1.48.0 REQUIRED)
+find_package(Boost 1.58.0 REQUIRED filesystem)
 
 #-----------------------------------------------------------------------
 # Global settings and recurse into example tree
 #
+# For convenience, enforce standard rather than features as this is
+# only a testing project
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_EXTENSIONS OFF)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wshadow")
+endif()
 include_directories(${Boost_INCLUDE_DIRS})
+
+# - Testing, plus catch interface target
 enable_testing()
+add_library(catch INTERFACE)
+target_include_directories(catch INTERFACE ${PROJECT_SOURCE_DIR}/catch)
+add_library(catch-main STATIC catch/catch-main.cpp)
+target_link_libraries(catch-main INTERFACE catch)
 
 add_subdirectory(Source)
 
