@@ -13,7 +13,7 @@
 // This Project
 #include "PropertyCheckerInterfaces.hpp"
 
-int main(int argc, const char *argv[])
+int main(int /*argc*/, const char *argv[])
 {
   int result(0);
   if (argv[1]) {

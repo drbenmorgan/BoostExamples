@@ -91,8 +91,8 @@ class BitsetParser : public bsqi::grammar<Iterator, boost::dynamic_bitset<>()> {
   };
 
  private:
-  typedef bsqi::rule<Iterator,boost::dynamic_bitset<>()> bitset_rule_t;
-  typedef bsqi::rule<Iterator,std::string()> bitset_string_t;
+  using bitset_rule_t = bsqi::rule<Iterator,boost::dynamic_bitset<>()>;
+  using bitset_string_t = bsqi::rule<Iterator,std::string()>;
   bitset_string_t bits;
   bitset_string_t hex;
   bitset_rule_t bitset;

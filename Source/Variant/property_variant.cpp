@@ -133,7 +133,7 @@ template <typename T>
 class is_type_visitor : public boost::static_visitor<bool> {
 public:
   template <typename U>
-  bool operator()(const U& arg) const {
+  bool operator()(const U& /*arg*/) const {
     return typeid(T) == typeid(U);
   }
 };
@@ -217,7 +217,7 @@ int main() {
   p = warwick::Property("bar");
 
   try {
-    bool b = p.getValue<bool>();
+    p.getValue<bool>();
   } catch (const boost::bad_get& e) {
     std::cerr << "bad get caught" << std::endl;
   }

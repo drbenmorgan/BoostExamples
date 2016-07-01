@@ -2,6 +2,7 @@
 #
 # Common Tools library
 add_library(PropertyTreeTools SHARED PropertyTreeTools.cpp)
+target_link_libraries(PropertyTreeTools PUBLIC Boost::boost)
 
 # Basic usage
 add_executable(basic_ptree basic_ptree.cpp)

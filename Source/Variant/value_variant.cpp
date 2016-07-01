@@ -106,11 +106,11 @@ class value_t {
   template <typename T>
   struct is_sequence_visitor : boost::static_visitor<bool> {
     template <typename U>
-    bool operator()(const U& arg) const {
+    bool operator()(const U& /*arg*/) const {
       return false;
     }
 
-    bool operator()(const typename value_t::sequence<T>::type& arg) const {
+    bool operator()(const typename value_t::sequence<T>::type& /*arg*/) const {
       return true;
     }
   };
@@ -170,7 +170,7 @@ bool value_t::is_sequence() const {
 
 template <typename T>
 struct NoValidation {
-  static void validate(const T& v) {}
+  static void validate(const T&) {}
 };
 
 

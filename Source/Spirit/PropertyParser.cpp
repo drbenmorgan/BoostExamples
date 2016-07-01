@@ -68,7 +68,7 @@ bool parse_istream(std::istream& input, warwick::Property& output) {
 
   // Handle incomplete parse
   if (first != last) {
-    std::cerr << "No complete parse of \"" << input << "\"" << std::endl;
+    std::cerr << "No complete parse of \"" << &input << "\"" << std::endl;
     std::cerr << "Dangling input:" << std::endl;
     std::copy(first,last,std::ostream_iterator<const char>(std::cerr));
     std::cerr << std::endl;
@@ -97,7 +97,7 @@ bool parse_document(std::istream& input, warwick::PropertyList& output) {
 
   // Handle incomplete parse
   if (first != last) {
-    std::cerr << "No complete parse of \"" << input << "\"" << std::endl;
+    std::cerr << "No complete parse of \"" << &input << "\"" << std::endl;
     std::cerr << "Dangling input:" << std::endl;
     //std::copy(first,last,std::ostream_iterator<const char>(std::cerr));
     std::cerr << std::endl;

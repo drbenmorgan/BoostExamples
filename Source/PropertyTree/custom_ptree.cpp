@@ -37,7 +37,7 @@ struct ostream_visitor : public boost::static_visitor<void> {
     os_ << arg;
   }
 
-  void operator()(const boost::blank& arg) const {}
+  void operator()(const boost::blank& /*arg*/) const {}
 
   //template<typename U>
   //void operator()(const std::vector<U>& arg) const {
@@ -122,7 +122,7 @@ void display(const properties& t, int depth=0) {
   }
 }
 
-int main(int argc, const char *argv[])
+int main(int /*argc*/, char **/*argv*/)
 {
   properties p;
   p.put("alpha", 1);

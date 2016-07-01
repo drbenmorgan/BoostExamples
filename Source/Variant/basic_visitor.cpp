@@ -26,7 +26,7 @@ template <typename T>
 class is_type_visitor : public boost::static_visitor<bool> {
  public:
   template <typename U>
-  bool operator()(const U& arg) const {
+  bool operator()(const U& /*arg*/) const {
     return typeid(T) == typeid(U);
   }
 };
@@ -50,7 +50,7 @@ bool able_to_store(const U&) {
 }
 } // namespace warwick
 
-int main(int argc, char *[]) {
+int main(int /*argc*/, char *[]) {
   typedef boost::variant<int, double, std::string> bvtype;
 
   bvtype a;
@@ -86,8 +86,6 @@ int main(int argc, char *[]) {
   std::cout << "any : " << boost::any_cast<int>(anyVector[0]) << std::endl;
   std::cout << "any : " << boost::any_cast<double>(anyVector[1]) << std::endl;
   std::cout << "any : " << boost::any_cast<std::string>(anyVector[2]) << std::endl;
-
-
 
   return 0;
 }
