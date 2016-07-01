@@ -41,9 +41,8 @@ find_package(Boost 1.58.0 REQUIRED filesystem)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wshadow")
+  set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wshadow -Werror")
 endif()
-include_directories(${Boost_INCLUDE_DIRS})
 
 # - Testing, plus catch interface target
 enable_testing()
