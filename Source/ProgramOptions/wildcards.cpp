@@ -100,9 +100,8 @@ int main(int argc, char **argv) {
     glob_t globBuffer;
     std::cout << "trying to glob : " << *start << std::endl;
     glob((*start).c_str(), GLOB_TILDE, NULL, &globBuffer);
-    std::cout
 
-    for(int i(0); i < globBuffer.gl_pathc; ++i) {
+    for(size_t i {0}; i < globBuffer.gl_pathc; ++i) {
       globED.push_back(globBuffer.gl_pathv[i]);
     }
 
