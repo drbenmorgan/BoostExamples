@@ -30,3 +30,8 @@ set_target_properties(PropertyChecker PropertyParser
 add_executable(testIdentifier testIdentifier.cpp)
 target_link_libraries(testIdentifier catch-main)
 add_test(NAME testIdentifier COMMAND testIdentifier)
+
+add_executable(testUnitsParser testUnitsParser.cpp)
+target_link_libraries(testUnitsParser Boost::boost)
+add_test(NAME testUnitsParser COMMAND testUnitsParser)
+
