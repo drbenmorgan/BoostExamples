@@ -6,4 +6,5 @@ add_subdirectory(Iterator)
 add_subdirectory(ProgramOptions)
 add_subdirectory(PropertyTree)
 add_subdirectory(Units)
+add_subdirectory(Fusion)
 

@@ -122,30 +122,30 @@ struct struct_visitor_initiate : struct_visitor_recursive<Sequence, typename seq
 
 
 //----------------------------------------------------------------------
-// Fusion map style type-to-string mapping
-// Now mostly handled by the demangling, plus specialization
-//
-struct TypeTraits {
-  typedef boost::mpl::vector<int,double,bool,std::string> types;
-  // Transform this to a fusion map of T->std::string
-  typedef boost::fusion::map<
-      boost::fusion::pair<int, std::string>,
-      boost::fusion::pair<double, std::string>,
-      boost::fusion::pair<bool, std::string>,
-      boost::fusion::pair<std::string,std::string> > type_map;
-  static const type_map as_string;
+// Other iteration via for_each?
+template <typename T>
+struct field_printer {
+  typedef T Type;
 
-  template <typename T>
-  static std::string nameOf() {
-    return boost::fusion::at_key<T>(TypeTraits::as_string);
-  }
-};
+  template <typename Zip>
+  void operator()(Zip const& zip) const {
+    typedef typename boost::remove_const<
+        typename boost::remove_reference<
+        typename boost::result_of::at_c<Zip, 0>::type
+        >::type
+        >::type Index;
 
-const TypeTraits::type_map TypeTraits::as_string = TypeTraits::type_map {
-      boost::fusion::make_pair<int>("integer"),
-      boost::fusion::make_pair<double>("real"),
-      boost::fusion::make_pair<bool>("boolean"),
-      boost::fusion::make_pair<std::string>("string")};
+    // Get field name as string
+    std::string field_name = element_at<Type, Index>::name();
+
+    // Field type name
+    std::string field_type = element_at<Type,Index>::type_name();
+
+    // Field value
+    auto field_value =
+
+
+
 
 
 //----------------------------------------------------------------------
@@ -162,6 +162,14 @@ BOOST_FUSION_ADAPT_STRUCT(Config,
                           bar,
                           baz,
                           bob)
+
+//! The nested struct
+struct Module {
+  std::string algorithm;
+  Config setup;
+};
+
+BOOST_FUSION_ADAPT_STRUCT(Module, algorithm, setup)
 
 // Essentially need serialize/deserialize checks,
 // Config makeFrom(Properties p) {
@@ -180,13 +188,16 @@ BOOST_FUSION_ADAPT_STRUCT(Config,
 // }
 // NB, these are *not* parsers, it's pure setting/schema validation
 // from a nested key-value structure. Above ignore error checking/nesting...
+// - Mock properties?
+//typedef std::map<std::string, boost::variant<int, double, bool, std::vector<int> > Properties;
+
 
 int main(int /*argc*/, const char*[]) {
   // What can we do with the adapted sequence?
 
   // Print members?
-  Config c;
-  struct_visitor_initiate<Config> s;
+  Module c;
+  struct_visitor_initiate<Module> s;
   s.visit(c);
 
   return 0;
