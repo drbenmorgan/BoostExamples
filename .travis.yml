@@ -7,3 +7,4 @@ before_install:
 script:
   - pwd
   - ls -larth
+  - env
