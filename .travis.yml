@@ -7,6 +7,7 @@ matrix:
       # Add `env` here to select different distros? Looks like we'd need addtional "- os:" entries 
       # with env set as, e.g. "ubuntu", "centos". Using higher level env would also add these
       # to the osx builds!
+      env: BOOSTEX_DOCKER_IMAGE=ubuntu
     - os: osx
       osx_image: xcode8.3
     # Add additional os/osx_image pairs here as required
