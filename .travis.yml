@@ -1,8 +1,15 @@
 language: cpp
-services: docker
+
+matrix:
+  include:
+    - os: linux
+      services: docker
+    - os: osx
+      osx_image: xcode8.3
 
 before_install:
-  - docker pull benmorgan/supernemo-ubuntu:3.0
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull benmorgan/supernemo-ubuntu:3.0 ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew ls ; fi
 
 script:
   - pwd
