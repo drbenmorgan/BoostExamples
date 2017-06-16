@@ -4,14 +4,21 @@ matrix:
   include:
     - os: linux
       services: docker
+      # Add `env` here to select different distros? Looks like we'd need addtional "- os:" entries 
+      # with env set as, e.g. "ubuntu", "centos". Using higher level env would also add these
+      # to the osx builds!
     - os: osx
       osx_image: xcode8.3
+    # Add additional os/osx_image pairs here as required
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull benmorgan/supernemo-ubuntu:3.0 ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew ls ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew ls --versions ; fi
 
+# What this shows is we end up in the source dir for the checkout.
 script:
   - pwd
   - ls -larth
   - env
+  - git status
+  - git log -n2
