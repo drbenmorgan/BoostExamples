@@ -81,7 +81,8 @@ struct LibraryLoaderConfig : public Mixin<LibraryLoaderConfig> {
     bool core = Mixin<LibraryLoaderConfig>::from_yaml(node);
     if (core) std::cout << "got plugins sequence o.k." << std::endl;
 
-    // Probably more direct way to do this...
+    // Probably more direct way to do this using a specialization
+    // or custom class/struct to parse this type of key-from-previous-value pattern.
     for (const auto& key: plugins) {
       std::cout << "Trying to parse key " << key << std::endl;
       PluginConfig c;

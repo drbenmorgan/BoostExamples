@@ -18,7 +18,7 @@
 
 template<typename T>
 struct metadata {
-  // Return the string name of the type
+  // Return the demangled string name of the type
   static inline std::string name(void) {
     return boost::units::detail::demangle(typeid(T).name());
   }
@@ -49,29 +49,29 @@ struct sequence {
   typedef boost::mpl::range_c<unsigned int, 0, boost::mpl::size<S>::value> indices;
 };
 
+// Only valid for (a) is_class<S>::value == true, (b) S is a fusion sequence
 template<typename S, typename N>
 struct element_at {
-  // Type of the element at this index
+  // Type of the struct member at this index
   typedef typename boost::fusion::result_of::value_at<S, N>::type type;
 
-  // Previous element
+  // Previous member
   typedef typename boost::mpl::prior<N>::type previous;
 
-  // Next element
+  // Next member
   typedef typename boost::mpl::next<N>::type next;
 
-  // Member name of the element at this index
+  // Name of the struct member at this index
   static inline std::string name(void) {
     return boost::fusion::extension::struct_member_name<S, N::value>::call();
   }
 
-  // Type name of the element at this index
+  // Demangled name of the type held in this element
   static inline std::string type_name(void) {
-    //return boost::units::detail::demangle(typeid(type).name());
     return metadata<type>::name();
   }
 
-  // Access the element
+  // Access
   static inline typename boost::fusion::result_of::at<S const, N>::type get(S const& s) {
     return boost::fusion::at<N>(s);
   }

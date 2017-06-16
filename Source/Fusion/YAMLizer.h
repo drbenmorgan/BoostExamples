@@ -16,23 +16,29 @@
 #include "FusionWrappers.h"
 #include "YAMLStructConversion.h"
 
-template <typename T>
-class Mixin {
+// Try to yamlize without inheritance
+// Presumes Fusion-ization of any type converted
+class YAMLizer {
  public:
-  typedef T Base;
+  //! Only enable to/from yaml/json if type is a Fusion sequence
+  template <typename T>
+  using IsFusionSequence = typename boost::enable_if<typename boost::fusion::traits::is_sequence<T>::type, int>::type;
 
-  // Convert this object to yaml
-  std::string to_yaml(void)
+ public:
+  // Convert this object to yaml IAOI T is a Fusion Sequence
+  template <typename T, IsFusionSequence<T> = 0>
+  static std::string to_yaml(const T& rhs)
   {
     // Create an emitter
     YAML::Emitter emitter;
 
     // Emit yaml
-    return emit(emitter);
+    return YAMLizer::emit(emitter, rhs);
   }
 
   // Convert this object to json
-  std::string to_json(void)
+  template <typename T, IsFusionSequence<T> = 0>
+  static std::string to_json(const T& rhs)
   {
     // Create an emitter
     YAML::Emitter emitter;
@@ -44,11 +50,12 @@ class Mixin {
     emitter << YAML::EscapeNonAscii;
 
     // Emit json
-    return emit(emitter);
+    return YAMLizer::emit(emitter, rhs);
   }
 
-  // Load yaml into this object
-  bool from_yaml(std::string const &yaml_string)
+  // Construct object from Yaml
+  template <typename T>
+  static T from_yaml(std::string const &yaml_string)
   {
     // Create a root node to load into
     ::YAML::Node root;
@@ -62,57 +69,63 @@ class Mixin {
     {
       // The yaml couldn't be parsed
       std::cout << "Invalid yaml" << std::endl;
-      return false;
+      throw;
     }
 
-    return from_yaml(root);
+    return YAMLizer::from_yaml<T>(root);
   }
 
   // The yaml parser can also parse json
-  inline bool from_json(std::string const &json_string)
+  template <typename T>
+  static T from_json(std::string const &json_string)
   {
-    return from_yaml(json_string);
+    return YAMLizer::from_yaml<T>(json_string);
   }
 
   // Load Yaml directly from a Node
-  bool from_yaml(YAML::Node &node)
+  template <typename T>
+  static T from_yaml(YAML::Node &node)
   {
     // Get a range representing the size of the structure
-    typedef typename sequence<Base>::indices indices;
+    typedef typename sequence<T>::indices indices;
 
     // Create an extractor for the root node
-    extractor<Base> extractor(node);
+    extractor<T> extractor(node);
+
+    // Create new instance
+    T output;
 
     // Extract each member of the structure
     try
     {
       // An exception is thrown if any item in the loop cannot be read
-      boost::fusion::for_each(boost::fusion::zip(indices(), self()), extractor);
+      boost::fusion::for_each(boost::fusion::zip(indices(), output), extractor);
     }
-    // Catch all exceptions and prevent them from propagating
+    // Catch all exceptions and rethrow
     catch (...)
     {
-      return false;
+      throw;
     }
 
-    // If we made it here, all fields were read correctly
-    return true;
+    // If we made it here, all fields were read correctly, return instance
+    return output;
   }
 
 protected:
-  std::string emit(YAML::Emitter &emitter)
+  template <typename T>
+  static std::string emit(YAML::Emitter &emitter, const T& rhs)
   {
     // Get a range representing the size of the structure
-    typedef typename sequence<Base>::indices indices;
+    typedef typename sequence<T>::indices indices;
 
     // Make a root node to insert into
     ::YAML::Node root;
 
     // Create an inserter for the root node
-    inserter<Base> inserter(root);
+    inserter<T> inserter(root);
 
     // Insert each member of the structure
-    boost::fusion::for_each(boost::fusion::zip(indices(), self()), inserter);
+    boost::fusion::for_each(boost::fusion::zip(indices(), rhs), inserter);
 
     // Emit yaml
     emitter << root;
@@ -120,18 +133,7 @@ protected:
     // Return string representation
     return emitter.c_str();
   }
-
-private:
-  // Cast ourselves to our CRTP base
-  Base &self(void)
-  {
-    return static_cast<Base &>(*this);
-  }
 };
-
-// The above requires inheritance, can we also work standalone?
-// As above, clearly requires Fusion-ization
-
 
 #endif // YAMLMIXIN_HH
 

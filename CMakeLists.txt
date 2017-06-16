@@ -31,7 +31,8 @@ project(BoostExamples)
 #-----------------------------------------------------------------------
 # Find Boost >= 1.58.0
 #
-find_package(Boost 1.58.0 REQUIRED filesystem)
+set(Boost_NO_BOOST_CMAKE ON)
+find_package(Boost 1.58.0 REQUIRED COMPONENTS filesystem)
 
 #-----------------------------------------------------------------------
 # Global settings and recurse into example tree

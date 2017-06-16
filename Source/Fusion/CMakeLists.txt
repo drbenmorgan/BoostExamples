@@ -10,4 +10,10 @@ include_directories(${YAML_INCLUDE_DIRS})
 add_executable(fusion_yaml fusion_yaml.cpp)
 target_link_libraries(fusion_yaml ${YAML_LIBRARIES})
 
+add_executable(yaml_converters yaml_converters.cpp)
+target_link_libraries(yaml_converters ${YAML_LIBRARIES})
+
+add_executable(yaml_izer yaml_izer.cpp)
+target_link_libraries(yaml_izer ${YAML_LIBRARIES})
+
 
