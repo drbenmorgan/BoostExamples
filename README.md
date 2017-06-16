@@ -1,5 +1,7 @@
 BoostExamples
 =============
+[![Build Status](https://travis-ci.org/drbenmorgan/BoostExamples.svg?branch=master)](https://travis-ci.org/drbenmorgan/BoostExamples)
+
 A (messy) sandpit for experimenting with the Boost C++ libraries.
 
 Requirements
