@@ -15,9 +15,4 @@ matrix:
 before_install: ./.travis/before_install.sh
 
 # What this shows is we end up in the source dir for the checkout.
-script:
-  - pwd
-  - ls -larth
-  - env
-  - git status
-  - git log -n2
+script: ./.travis/script.sh
