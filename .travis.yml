@@ -12,7 +12,27 @@ matrix:
       osx_image: xcode8.3
     # Add additional os/osx_image pairs here as required
 
-before_install: ./.travis/before_install.sh
+before_install:
+  - |
+    if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
+      docker pull benmorgan/supernemo-ubuntu:3.0
+      docker run -itd --name docker-cmake benmorgan/supernemo-ubuntu:3.0
+    elif [ "$TRAVIS_OS_NAME" == "osx" ] ; then
+      brew ls --versions
+    fi
 
 # What this shows is we end up in the source dir for the checkout.
-script: ./.travis/script.sh
+script:
+  - pwd
+  - ls -larth
+  - env
+  - git status
+  - git log -n2
+  - |
+    if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
+      docker exec docker-cmake which cmake
+    elif [ "$TRAVIS_OS_NAME" == "osx" ] ; then
+      which cmake
+    fi
+
+
