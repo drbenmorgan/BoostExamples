@@ -1,21 +1,27 @@
+# All build envs are for C++
 language: cpp
 
+# Use matrix: to explicitly specify the builds
+# - Linux: Singular VM with docker, one build for
+#          each different image
+# - macOS: One each per osx_image value.
+#          Only latest Sierra for now.
 matrix:
   include:
     - os: linux
       services: docker
-      # Add `env` here to select different distros? Looks like we'd need addtional "- os:" entries 
-      # with env set as, e.g. "ubuntu", "centos". Using higher level env would also add these
-      # to the osx builds!
-      env: DOCKER_IMAGE=benmorgan/supernemo-ubuntu:3.0
-      #    - os: linux
-      #services: docker
-      #env: distro=centos6
+      env: DOCKER_IMAGE=supernemo/falaise-ubuntu1604-base
+    - os: linux
+      services: docker
+      env: DOCKER_IMAGE=supernemo/falaise-centos6-base
     - os: osx
       osx_image: xcode8.3
       compiler: clang
-    # Add additional os/osx_image pairs here as required
 
+# In a C++ project, no clear convention on before_install vs install
+# (Travis doesn't do anything automatically). Use it to:
+# - Linux: start the base container
+# - macOS: install brew packages
 before_install:
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
@@ -25,21 +31,11 @@ before_install:
              -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR \
              --name falaise-docker $DOCKER_IMAGE
     elif [ "$TRAVIS_OS_NAME" == "osx" ] ; then
-      brew ls --versions
+      brew install ninja yaml-cpp
     fi
 
-install:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install ninja yaml-cpp; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then docker exec falaise-docker brew install yaml-cpp; fi
-
-
-# What this shows is we end up in the source dir for the checkout.
+# Run packaged script to configure, make, run tests
 script:
-  - pwd
-  - ls -larth
-  - env
-  - git status
-  - git log -n2
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
       docker exec falaise-docker $TRAVIS_BUILD_DIR/.travis/cibuild.sh
