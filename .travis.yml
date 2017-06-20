@@ -7,7 +7,10 @@ matrix:
       # Add `env` here to select different distros? Looks like we'd need addtional "- os:" entries 
       # with env set as, e.g. "ubuntu", "centos". Using higher level env would also add these
       # to the osx builds!
-      env: BOOSTEX_DOCKER_IMAGE=ubuntu
+      env: DOCKER_IMAGE=benmorgan/supernemo-ubuntu:3.0
+      #    - os: linux
+      #services: docker
+      #env: distro=centos6
     - os: osx
       osx_image: xcode8.3
     # Add additional os/osx_image pairs here as required
@@ -15,11 +18,18 @@ matrix:
 before_install:
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
-      docker pull benmorgan/supernemo-ubuntu:3.0
-      docker run -itd --name docker-cmake benmorgan/supernemo-ubuntu:3.0
+      docker pull $DOCKER_IMAGE
+      docker run \
+             -itd \
+             -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR
+             --name falaise-docker $DOCKER_IMAGE
     elif [ "$TRAVIS_OS_NAME" == "osx" ] ; then
       brew ls --versions
     fi
+
+install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install ninja ; fi
+
 
 # What this shows is we end up in the source dir for the checkout.
 script:
@@ -30,9 +40,9 @@ script:
   - git log -n2
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
-      docker exec docker-cmake which cmake
+      docker exec falaise-docker $TRAVIS_BUILD_DIR/.travis/cibuild.sh
     elif [ "$TRAVIS_OS_NAME" == "osx" ] ; then
-      which cmake
+      $TRAVIS_BUILD_DIR/.travis/cibuild.sh
     fi
 
 
