@@ -10,10 +10,16 @@ matrix:
   include:
     - os: linux
       services: docker
-      env: DOCKER_IMAGE=supernemo/falaise-ubuntu1604-base
+      env:
+        - DOCKER_IMAGE=supernemo/falaise-ubuntu1604-base
+        - DOCKER_CONTAINER=falaise-docker
+        - SCRIPT_PREFIX_CMD="docker exec $DOCKER_CONTAINER"
     - os: linux
       services: docker
-      env: DOCKER_IMAGE=supernemo/falaise-centos6-base
+      env:
+        - DOCKER_IMAGE=supernemo/falaise-centos6-base
+        - DOCKER_CONTAINER=falaise-docker
+        - SCRIPT_PREFIX_CMD="docker exec $DOCKER_CONTAINER"
     - os: osx
       osx_image: xcode8.3
       compiler: clang
@@ -35,12 +41,5 @@ before_install:
     fi
 
 # Run packaged script to configure, make, run tests
-script:
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
-      docker exec falaise-docker $TRAVIS_BUILD_DIR/.travis/cibuild.sh
-    elif [ "$TRAVIS_OS_NAME" == "osx" ] ; then
-      $TRAVIS_BUILD_DIR/.travis/cibuild.sh
-    fi
-
+script: $SCRIPT_PREFIX_CMD $TRAVIS_BUILD_DIR/.travis/cibuild.sh
 
