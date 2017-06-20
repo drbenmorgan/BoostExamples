@@ -21,14 +21,14 @@ before_install:
       docker pull $DOCKER_IMAGE
       docker run \
              -itd \
-             -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR
+             -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR \
              --name falaise-docker $DOCKER_IMAGE
     elif [ "$TRAVIS_OS_NAME" == "osx" ] ; then
       brew ls --versions
     fi
 
 install:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install ninja ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install ninja yaml-cpp; fi
 
 
 # What this shows is we end up in the source dir for the checkout.
