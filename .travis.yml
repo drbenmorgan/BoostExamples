@@ -13,6 +13,7 @@ matrix:
       #env: distro=centos6
     - os: osx
       osx_image: xcode8.3
+      compiler: clang
     # Add additional os/osx_image pairs here as required
 
 before_install:
@@ -29,6 +30,7 @@ before_install:
 
 install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install ninja yaml-cpp; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then docker exec falaise-docker brew install yaml-cpp; fi
 
 
 # What this shows is we end up in the source dir for the checkout.
