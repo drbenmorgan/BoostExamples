@@ -30,7 +30,7 @@ before_install:
 
 install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew install ninja yaml-cpp; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then docker exec falaise-docker brew install yaml-cpp; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then docker exec falaise-docker brew install yaml-cpp; fi
 
 
 # What this shows is we end up in the source dir for the checkout.
