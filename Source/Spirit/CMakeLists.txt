@@ -39,4 +39,8 @@ add_executable(testUnitGrammar testUnitGrammar.cpp)
 target_link_libraries(testUnitGrammar catch-main Boost::boost)
 add_test(NAME testUnitGrammar COMMAND testUnitGrammar)
 
+add_executable(testIDGrammar testIDGrammar.cpp)
+target_link_libraries(testIDGrammar catch-main Boost::boost)
+add_test(NAME testIDGrammar COMMAND testIDGrammar)
+
 
